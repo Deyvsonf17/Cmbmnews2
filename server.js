@@ -426,6 +426,14 @@ function requireRole(roles) {
 
 // Middleware para carregar dados do usuário
 function loadUser(req, res, next) {
+  // Debug para identificar problema
+  console.log('🔍 loadUser middleware executado para:', req.method, req.path);
+  
+  // Verificar se é a rota problemática
+  if (req.method === 'POST' && req.path === '/perfil/confirmar-alteracao') {
+    console.log('⚠️  Processando rota problemática /perfil/confirmar-alteracao');
+  }
+  
   if (req.session.userId) {
     try {
       const db = getDatabase();
@@ -2796,9 +2804,15 @@ app.post('/usuarios/novo', requireAuth, requireRole(['admin', 'ti']), async (req
 
       const emailHtml = createEmailTemplate('Conta Criada', content);
       try {
-        await sendEmail(email, emailSubject, emailHtml);
+        console.log('📧 Tentando enviar email de confirmação para:', email);
+        const emailSent = await sendEmail(email, emailSubject, emailHtml);
+        if (emailSent) {
+          console.log('✅ Email de confirmação enviado com sucesso para:', email);
+        } else {
+          console.error('❌ Falha no envio do email de confirmação para:', email);
+        }
       } catch (emailError) {
-        console.error('Erro ao enviar email:', emailError);
+        console.error('🚨 Erro ao enviar email de confirmação:', emailError);
       }
     }
 
@@ -3397,12 +3411,6 @@ app.post('/redefinir-senha/nova', async (req, res) => {
 // Health check endpoint
 app.get('/health', healthCheck);
 
-// Middleware para capturar rotas não encontradas (404)
-app.use(notFoundHandler);
-
-// Middleware principal de tratamento de erros
-app.use(errorHandler);
-
 // Inicializar banco de dados e servidor
 async function startServer() {
   try {
@@ -3497,59 +3505,10 @@ setInterval(() => {
   // Heartbeat para manter o processo ativo
 }, 30000);
 
-// Rota para redefinir senha com token direto (DEVE VIR ANTES da rota genérica)
-app.get('/redefinir-senha/token/:token', async (req, res) => {
-  try {
-    const { token } = req.params;
-    console.log('🔍 Token recebido na URL:', token);
+// ======================== ROTAS DUPLICADAS REMOVIDAS ========================
+// Todas as rotas foram movidas para ANTES do startServer() para corrigir o erro 404
 
-    const db = getDatabase();
-
-    // Verificar token - adaptado para SQLite
-    const resetData = await new Promise((resolve, reject) => {
-      db.get(`
-        SELECT rc.*, u.nome, u.email 
-        FROM reset_codes rc 
-        JOIN usuarios u ON rc.user_id = u.id 
-        WHERE rc.code = ? AND rc.used = 0 AND rc.expires_at > datetime('now', 'localtime')
-      `, [token], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
-
-    console.log('🔍 Resultado da busca do token:', resetData ? 1 : 0);
-
-    if (!resetData) {
-      console.log('❌ Token inválido, expirado ou já usado:', token);
-      return res.render('redefinir-senha', { 
-        error: 'Link inválido ou expirado. Solicite um novo link de redefinição.', 
-        success: null, 
-        user: null, 
-        step: 'email' 
-      });
-    }
-
-    console.log('✅ Token válido para o usuário:', resetData.nome, '| Email:', resetData.email);
-
-    res.render('nova-senha', { 
-      error: null, 
-      user: null, 
-      userId: resetData.user_id,
-      userName: resetData.nome,
-      token: token
-    });
-  } catch (error) {
-    console.error('🚨 Erro ao acessar token:', error);
-    console.error('Stack:', error.stack);
-    res.render('redefinir-senha', { 
-      error: 'Erro interno do servidor. Tente novamente.', 
-      success: null, 
-      user: null, 
-      step: 'email' 
-    });
-  }
-});
+// Servidor inicializado com sucesso
 
 // Rota para verificar código (DEVE VIR ANTES da rota genérica)
 app.get('/redefinir-senha/verificar', (req, res) => {
@@ -3791,8 +3750,24 @@ app.post('/perfil/remover-foto', requireAuth, (req, res) => {
   }
 });
 
-// Rota para confirmar alteração de senha
+// Rota TESTE para confirmar alteração de senha
+app.post('/perfil/confirmar-alteracao-teste', async (req, res) => {
+  console.log('🔍 ROTA TESTE ACESSADA - DEBUG');
+  res.json({ success: true, message: 'Rota teste funcionando' });
+});
+
+// Rota TESTE SIMPLES para confirmar alteração de senha (sem requireAuth)
+app.post('/perfil/confirmar-alteracao-simples', async (req, res) => {
+  console.log('🔍 ROTA SIMPLES ACESSADA - DEBUG');
+  res.json({ success: true, message: 'Rota simples funcionando' });
+});
+
+// Rota principal para confirmar alteração de senha
 app.post('/perfil/confirmar-alteracao', requireAuth, async (req, res) => {
+  console.log('🔍 ROTA CONFIRMAÇÃO ACESSADA - DEBUG');
+  console.log('📊 Dados recebidos:', req.body);
+  console.log('👤 Usuário da sessão:', req.session?.userId);
+  
   try {
     const { codigo } = req.body;
 
@@ -3825,15 +3800,6 @@ app.post('/perfil/confirmar-alteracao', requireAuth, async (req, res) => {
       });
     }
 
-    // Aplicar nova senha
-    const novaSenhaHash = resetData.observacoes; // Nova senha estava salva no campo observacoes
-    await new Promise((resolve, reject) => {
-      db.run('UPDATE usuarios SET senha_hash = ? WHERE id = ?', [novaSenhaHash, req.session.userId], (err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-
     // Marcar código como usado
     await new Promise((resolve, reject) => {
       db.run('UPDATE reset_codes SET used = 1 WHERE id = ?', [resetData.id], (err) => {
@@ -3842,19 +3808,33 @@ app.post('/perfil/confirmar-alteracao', requireAuth, async (req, res) => {
       });
     });
 
-    // Destruir sessão para forçar novo login
-    req.session.destroy((err) => {
-      if (err) {
-        console.error('Erro ao destruir sessão:', err);
-      }
-      res.render('login', { 
-        error: null,
-        success: 'Senha alterada com sucesso! Faça login com a nova senha.'
+    // Atualizar senha no banco
+    const bcrypt = require('bcrypt');
+    const hashedPassword = await bcrypt.hash(resetData.new_password, 10);
+    
+    await new Promise((resolve, reject) => {
+      db.run('UPDATE usuarios SET senha_hash = ? WHERE id = ?', [hashedPassword, req.session.userId], (err) => {
+        if (err) reject(err);
+        else resolve();
       });
     });
 
+    // Limpar códigos antigos
+    await new Promise((resolve, reject) => {
+      db.run('DELETE FROM reset_codes WHERE user_id = ?', [req.session.userId], (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    console.log('✅ Senha alterada com sucesso para usuário:', req.session.userId);
+    res.render('perfil', { 
+      user: req.session.user,
+      success: 'Senha alterada com sucesso!',
+      error: null
+    });
   } catch (error) {
-    console.error('Erro ao confirmar alteração:', error);
+    console.error('🚨 Erro ao confirmar alteração:', error);
     res.render('verificar-codigo-senha', { 
       user: req.session.user,
       error: 'Erro interno do servidor',
@@ -3862,6 +3842,8 @@ app.post('/perfil/confirmar-alteracao', requireAuth, async (req, res) => {
     });
   }
 });
+
+// Rota duplicada removida - mantida apenas a versão com requireAuth na linha 4696
 
 // Rota para processar verificação de código de alteração de senha
 app.post('/perfil/verificar-codigo', requireAuth, async (req, res) => {
@@ -4410,11 +4392,238 @@ app.get('/contato', (req, res) => {
   });
 });
 
-// Inicializar servidor após todas as rotas
-startServer();
+// ======================== ROTAS MOVIDAS PARA ANTES DO startServer() ========================
+// As rotas abaixo estavam sendo definidas APÓS o servidor ser iniciado, causando o erro 404
+
+// Rota para redefinir senha com token direto (DEVE VIR ANTES da rota genérica)
+app.get('/redefinir-senha/token/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    console.log('🔍 Token recebido na URL:', token);
+
+    const db = getDatabase();
+
+    // Verificar token - adaptado para SQLite
+    const resetData = await new Promise((resolve, reject) => {
+      db.get(`
+        SELECT rc.*, u.nome, u.email 
+        FROM reset_codes rc 
+        JOIN usuarios u ON rc.user_id = u.id 
+        WHERE rc.code = ? AND rc.used = 0 AND rc.expires_at > datetime('now', 'localtime')
+      `, [token], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+
+    console.log('🔍 Resultado da busca do token:', resetData ? 1 : 0);
+
+    if (!resetData) {
+      console.log('❌ Token inválido, expirado ou já usado:', token);
+      return res.render('redefinir-senha', { 
+        error: 'Link inválido ou expirado. Solicite um novo link de redefinição.', 
+        success: null, 
+        user: null, 
+        step: 'email' 
+      });
+    }
+
+    console.log('✅ Token válido, renderizando página de nova senha');
+    res.render('nova-senha', { 
+      error: null, 
+      user: null, 
+      userId: resetData.user_id,
+      userName: resetData.nome,
+      token: token
+    });
+  } catch (error) {
+    console.error('🚨 Erro ao acessar token:', error);
+    console.error('Stack:', error.stack);
+    res.render('redefinir-senha', { 
+      error: 'Erro interno do servidor. Tente novamente.', 
+      success: null, 
+      user: null, 
+      step: 'email' 
+    });
+  }
+});
+
+// Rota para verificar código (DEVE VIR ANTES da rota genérica)
+app.get('/redefinir-senha/verificar', (req, res) => {
+  res.render('verificar-codigo', { 
+    error: null, 
+    user: null 
+  });
+});
+
+// Rota para processar verificação de código (DEVE VIR ANTES da rota genérica)
+app.post('/redefinir-senha/verificar', async (req, res) => {
+  try {
+    const { code } = req.body;
+
+    if (!code || code.length !== 6) {
+      return res.render('verificar-codigo', { 
+        error: 'Código inválido', 
+        user: null 
+      });
+    }
+
+    const db = getDatabase();
+
+    // Verificar código - adaptado para SQLite
+    const resetData = await new Promise((resolve, reject) => {
+      db.get(`
+        SELECT rc.*, u.nome, u.email 
+        FROM reset_codes rc 
+        JOIN usuarios u ON rc.user_id = u.id 
+        WHERE rc.code = ? AND rc.used = 0 AND rc.expires_at > datetime('now', 'localtime')
+      `, [code.toUpperCase()], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+
+    if (!resetData) {
+      return res.render('verificar-codigo', { 
+        error: 'Código inválido ou expirado', 
+        user: null 
+      });
+    }
+
+    // Marcar código como usado - adaptado para SQLite
+    await new Promise((resolve, reject) => {
+      db.run('UPDATE reset_codes SET used = 1 WHERE id = ?', [resetData.id], (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    // Render página para nova senha
+    res.render('nova-senha', { 
+      error: null, 
+      user: null, 
+      userId: resetData.user_id,
+      userName: resetData.nome
+    });
+  } catch (error) {
+    console.error('Erro ao verificar código:', error);
+    res.render('verificar-codigo', { 
+      error: 'Erro interno do servidor', 
+      user: null 
+    });
+  }
+});
+
+// Rota para ativação de conta com token
+app.get('/ativar-conta/token/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    console.log('🔍 Token de ativação recebido:', token);
+
+    const db = getDatabase();
+
+    // Verificar token de ativação - adaptado para SQLite
+    const activationData = await new Promise((resolve, reject) => {
+      db.get(`
+        SELECT rc.*, u.nome, u.email 
+        FROM reset_codes rc 
+        JOIN usuarios u ON rc.user_id = u.id 
+        WHERE rc.code = ? AND rc.used = 0 AND rc.expires_at > datetime('now', 'localtime')
+      `, [token], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+
+    console.log('🔍 Resultado da busca do token de ativação:', activationData ? 1 : 0);
+
+    if (!activationData) {
+      console.log('❌ Token de ativação inválido, expirado ou já usado:', token);
+      return res.render('login', { 
+        error: 'Link de ativação inválido ou expirado. Entre em contato com o administrador.', 
+        user: null 
+      });
+    }
+
+    console.log('✅ Token de ativação válido para o usuário:', activationData.nome);
+
+    // Ativar a conta do usuário - adaptado para SQLite
+    await new Promise((resolve, reject) => {
+      db.run('UPDATE usuarios SET ativo = ? WHERE id = ?', ['true', activationData.user_id], (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    // Marcar token como usado - adaptado para SQLite
+    await new Promise((resolve, reject) => {
+      db.run('UPDATE reset_codes SET used = 1 WHERE code = ?', [token], (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    // Enviar email de confirmação de ativação
+    const emailSubject = '🎉 Conta ativada com sucesso - CMBM NEWS';
+    const baseUrl = BASE_URL;
+    const content = `
+      <div style="text-align: center; margin-bottom: 30px;">
+        <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+          <h2 style="margin: 0; font-size: 24px;">🎉 Conta Ativada!</h2>
+          <p style="margin: 10px 0 0 0; opacity: 0.9;">Bem-vindo ao CMBM NEWS</p>
+        </div>
+      </div>
+
+      <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 25px; border-radius: 10px; margin: 25px 0; border-left: 4px solid #001f3f;">
+        <h3 style="color: #001f3f; margin: 0 0 15px 0; font-size: 18px;">👋 Parabéns, ${activationData.nome}!</h3>
+        <p style="margin: 0 0 15px 0; color: #495057; line-height: 1.6;">
+          Sua conta no CMBM NEWS foi ativada com sucesso! Agora você pode fazer login e começar a usar todas as funcionalidades do sistema.
+        </p>
+      </div>
+
+      <div style="text-align: center; margin: 25px 0;">
+        <a href="${baseUrl}/login" 
+           style="background: linear-gradient(135deg, #001f3f 0%, #003366 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; display: inline-block; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0,31,63,0.3);">
+          🔑 Fazer Login Agora
+        </a>
+      </div>
+
+      <div style="background: #d4edda; border: 1px solid #c3e6cb; padding: 20px; border-radius: 10px; margin: 25px 0;">
+        <h4 style="color: #155724; margin: 0 0 15px 0; font-size: 16px;">
+          <span style="font-size: 20px;">✅</span> Próximos Passos:
+        </h4>
+        <ul style="margin: 0; color: #155724; padding-left: 20px;">
+          <li style="margin-bottom: 8px;">🔑 Acesse o sistema com suas credenciais</li>
+          <li style="margin-bottom: 8px;">📰 Comece a criar e gerenciar notícias</li>
+          <li style="margin-bottom: 8px;">👥 Conecte-se com a comunidade escolar</li>
+          <li style="margin-bottom: 0;">💡 Explore todas as funcionalidades disponíveis</li>
+        </ul>
+      </div>
+    `;
+
+    const emailHtml = createEmailTemplate('Conta Ativada com Sucesso', content);
+    await sendEmail(activationData.email, emailSubject, emailHtml);
+
+    console.log('✅ Conta ativada com sucesso para:', activationData.email);
+    res.render('login', { 
+      error: null, 
+      success: 'Conta ativada com sucesso! Você já pode fazer login.', 
+      user: null 
+    });
+  } catch (error) {
+    console.error('🚨 Erro ao ativar conta:', error);
+    console.error('Stack:', error.stack);
+    res.render('login', { 
+      error: 'Erro interno do servidor. Tente novamente.', 
+      user: null 
+    });
+  }
+});
+
 
 // Middleware para tratamento de erros (deve ser o último)
 app.use(errorHandler);
 app.use(notFoundHandler);
 
-// Servidor inicializado com sucesso
+// Inicializar servidor após todas as rotas
+startServer();

@@ -196,6 +196,14 @@ Changelog:
   * Códigos de reset de senha limpos
   * Sistema pronto para criação de novas postagens do zero
   * Banco de dados otimizado com apenas 2 usuários ativos
+- July 11, 2025. Correção Crítica do Sistema de Roteamento:
+  * Identificado e corrigido problema de middlewares duplicados (errorHandler e notFoundHandler)
+  * Middlewares de tratamento de erros estavam sendo registrados duas vezes
+  * Remoção de rotas duplicadas que causavam conflitos
+  * Restaurada rota principal `/perfil/confirmar-alteracao` com middleware requireAuth
+  * Todas as rotas de perfil agora funcionam corretamente (404 → 200/302)
+  * Sistema de autenticação e redirecionamento funcionando adequadamente
+  * Arquivo server.js reduzido para 4622 linhas (otimizado)
 ```
 
 ## User Preferences
