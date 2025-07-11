@@ -2103,68 +2103,82 @@ app.post('/usuarios', requireRole(['ti', 'diretor']), async (req, res) => {
   try {
     const { nome, email, tipo, turma, ano } = req.body;
 
-    // Validação básica (sem senha, pois será gerada automaticamente)
-    if (!nome || !email || !tipo) {
+    // Função para renderizar com lista de usuários
+    const renderWithUsers = (error) => {
       const db = getDatabase();
-      const usuariosResult = db.prepare('SELECT id, nome, email, tipo, ativo, ano, turma FROM usuarios ORDER BY nome').all();
-
-      return res.render('usuarios', { 
-        usuarios: usuariosResult,
-        user: req.session.user,
-        error: 'Nome, email e tipo são obrigatórios'
+      db.all('SELECT id, nome, email, tipo, ativo, ano, turma FROM usuarios ORDER BY nome', [], (err, usuarios) => {
+        if (err) {
+          console.error('Erro ao carregar usuários:', err);
+          usuarios = [];
+        }
+        res.render('usuarios', { 
+          usuarios: usuarios || [],
+          user: req.session.user,
+          error: error
+        });
       });
+    };
+
+    // Validação básica
+    if (!nome || !email || !tipo) {
+      return renderWithUsers('Nome, email e tipo são obrigatórios');
     }
 
     // Validação de email
     if (!isValidEmail(email)) {
-      const db = getDatabase();
-      const usuariosResult = db.prepare('SELECT id, nome, email, tipo, ativo, ano, turma FROM usuarios ORDER BY nome').all();
-
-      return res.render('usuarios', { 
-        usuarios: usuariosResult,
-        user: req.session.user,
-        error: 'Email inválido'
-      });
+      return renderWithUsers('Email inválido');
     }
 
     // Verificar se email já existe
     const db = getDatabase();
-    const emailExists = db.prepare('SELECT id FROM usuarios WHERE email = ?').get(email);
-    
-    if (emailExists) {
-      const usuariosResult = db.prepare('SELECT id, nome, email, tipo, ativo, ano, turma FROM usuarios ORDER BY nome').all();
+    db.get('SELECT id FROM usuarios WHERE email = ?', [email.toLowerCase()], async (err, emailExists) => {
+      if (err) {
+        console.error('Erro ao verificar email:', err);
+        return renderWithUsers('Erro interno do servidor');
+      }
       
-      return res.render('usuarios', { 
-        usuarios: usuariosResult,
-        user: req.session.user,
-        error: 'Email já está em uso'
-      });
-    }
+      if (emailExists) {
+        return renderWithUsers('Email já está em uso');
+      }
 
-    // Gerar senha temporária
-    const senhaTemporaria = Math.random().toString(36).slice(-8);
-    const senhaHash = await bcrypt.hash(senhaTemporaria, 10);
+      try {
+        // Gerar senha temporária
+        const senhaTemporaria = Math.random().toString(36).slice(-8);
+        const senhaHash = await bcrypt.hash(senhaTemporaria, 10);
 
-    // Inserir usuário
-    const insertUser = db.prepare(`
-      INSERT INTO usuarios (nome, email, senha_hash, tipo, ano, turma, ativo) 
-      VALUES (?, ?, ?, ?, ?, ?, 'sim')
-    `);
-    
-    insertUser.run(nome, email, senhaHash, tipo, ano || null, turma || null);
+        // Inserir usuário
+        db.run(
+          'INSERT INTO usuarios (nome, email, senha_hash, tipo, ano, turma, ativo) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [nome, email.toLowerCase(), senhaHash, tipo, ano || null, turma || null, 1],
+          function(err) {
+            if (err) {
+              console.error('Erro ao inserir usuário:', err);
+              return renderWithUsers('Erro ao criar usuário');
+            }
 
-    // Redirecionar com sucesso
-    res.redirect('/usuarios?success=Usuário criado com sucesso');
+            // Redirecionar com sucesso
+            res.redirect('/usuarios?success=Usuário criado com sucesso');
+          }
+        );
+      } catch (hashError) {
+        console.error('Erro ao gerar hash:', hashError);
+        return renderWithUsers('Erro interno do servidor');
+      }
+    });
 
   } catch (error) {
     console.error('Erro ao criar usuário:', error);
     const db = getDatabase();
-    const usuariosResult = db.prepare('SELECT id, nome, email, tipo, ativo, ano, turma FROM usuarios ORDER BY nome').all();
-    
-    res.render('usuarios', { 
-      usuarios: usuariosResult,
-      user: req.session.user,
-      error: 'Erro interno do servidor'
+    db.all('SELECT id, nome, email, tipo, ativo, ano, turma FROM usuarios ORDER BY nome', [], (err, usuarios) => {
+      if (err) {
+        console.error('Erro ao carregar usuários:', err);
+        usuarios = [];
+      }
+      res.render('usuarios', { 
+        usuarios: usuarios || [],
+        user: req.session.user,
+        error: 'Erro interno do servidor'
+      });
     });
   }
 });
