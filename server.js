@@ -549,6 +549,105 @@ app.get('/', httpCache(300), (req, res) => {
   }
 });
 
+// Rota para página de notícias
+app.get('/noticias', httpCache(300), (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const categoria = req.query.categoria || '';
+    const busca = req.query.busca || '';
+    const limit = 10;
+    const offset = (page - 1) * limit;
+
+    const db = getDatabase();
+
+    // Construir query de busca apenas para notícias publicadas
+    let baseQuery = 'SELECT * FROM noticias WHERE status = ?';
+    let countQuery = 'SELECT COUNT(*) as total FROM noticias WHERE status = ?';
+    let queryParams = ['publicada'];
+
+    if (categoria && categoria !== 'todas') {
+      baseQuery += ' AND categoria = ?';
+      countQuery += ' AND categoria = ?';
+      queryParams.push(categoria);
+    }
+
+    if (busca) {
+      baseQuery += ' AND (titulo LIKE ? OR conteudo LIKE ?)';
+      countQuery += ' AND (titulo LIKE ? OR conteudo LIKE ?)';
+      queryParams.push(`%${busca}%`, `%${busca}%`);
+    }
+
+    baseQuery += ' ORDER BY data_criacao DESC LIMIT ? OFFSET ?';
+
+    // Para o count, não adicionar limit/offset
+    const countParams = [...queryParams];
+    queryParams.push(limit, offset);
+
+    // Executar queries SQLite
+    db.all(baseQuery, queryParams, (err, noticias) => {
+      if (err) {
+        console.error('Erro ao carregar notícias:', err);
+        return res.render('noticias', {
+          noticias: [],
+          categorias: [],
+          currentPage: 1,
+          totalPages: 1,
+          categoria: '',
+          busca: '',
+          user: req.session.user
+        });
+      }
+
+      db.get(countQuery, countParams, (err, totalResult) => {
+        if (err) {
+          console.error('Erro ao contar notícias:', err);
+          return res.render('noticias', {
+            noticias: [],
+            categorias: [],
+            currentPage: 1,
+            totalPages: 1,
+            categoria: '',
+            busca: '',
+            user: req.session.user
+          });
+        }
+
+        db.all('SELECT DISTINCT categoria FROM noticias ORDER BY categoria', [], (err, categoriasResult) => {
+          if (err) {
+            console.error('Erro ao carregar categorias:', err);
+            categoriasResult = [];
+          }
+
+          const total = parseInt(totalResult.total);
+          const categorias = categoriasResult.map(row => row.categoria);
+          const totalPages = Math.ceil(total / limit);
+
+          res.render('noticias', {
+            noticias: noticias || [],
+            categorias,
+            currentPage: page,
+            totalPages,
+            categoria,
+            busca,
+            user: req.session.user
+          });
+        });
+      });
+    });
+  } catch (error) {
+    console.error('Erro ao carregar notícias:', error);
+    res.render('noticias', {
+      noticias: [],
+      categorias: [],
+      currentPage: 1,
+      totalPages: 1,
+      categoria: '',
+      busca: '',
+      user: req.session.user
+    });
+  }
+});
+
 // Rota para visualizar notícia individual
 app.get('/noticia/:slug', (req, res) => {
   try {
@@ -2007,10 +2106,10 @@ app.post('/usuarios', requireRole(['ti', 'diretor']), async (req, res) => {
     // Validação básica (sem senha, pois será gerada automaticamente)
     if (!nome || !email || !tipo) {
       const db = getDatabase();
-      const usuariosResult = await db.query('SELECT id, nome, email, tipo, ativo, ano, turma FROM usuarios ORDER BY nome');
+      const usuariosResult = db.prepare('SELECT id, nome, email, tipo, ativo, ano, turma FROM usuarios ORDER BY nome').all();
 
       return res.render('usuarios', { 
-        usuarios: usuariosResult.rows,
+        usuarios: usuariosResult,
         user: req.session.user,
         error: 'Nome, email e tipo são obrigatórios'
       });
@@ -2019,10 +2118,10 @@ app.post('/usuarios', requireRole(['ti', 'diretor']), async (req, res) => {
     // Validação de email
     if (!isValidEmail(email)) {
       const db = getDatabase();
-      const usuariosResult = await db.query('SELECT id, nome, email, tipo, ativo, ano, turma FROM usuarios ORDER BY nome');
+      const usuariosResult = db.prepare('SELECT id, nome, email, tipo, ativo, ano, turma FROM usuarios ORDER BY nome').all();
 
       return res.render('usuarios', { 
-        usuarios: usuariosResult.rows,
+        usuarios: usuariosResult,
         user: req.session.user,
         error: 'Email inválido'
       });
@@ -2030,13 +2129,13 @@ app.post('/usuarios', requireRole(['ti', 'diretor']), async (req, res) => {
 
     // Verificar se email já existe
     const db = getDatabase();
-    const emailExistsResult = await db.query('SELECT id FROM usuarios WHERE email = ?', [email]);
+    const emailExists = db.prepare('SELECT id FROM usuarios WHERE email = ?').get(email);
     
-    if (emailExistsResult.rows.length > 0) {
-      const usuariosResult = await db.query('SELECT id, nome, email, tipo, ativo, ano, turma FROM usuarios ORDER BY nome');
+    if (emailExists) {
+      const usuariosResult = db.prepare('SELECT id, nome, email, tipo, ativo, ano, turma FROM usuarios ORDER BY nome').all();
       
       return res.render('usuarios', { 
-        usuarios: usuariosResult.rows,
+        usuarios: usuariosResult,
         user: req.session.user,
         error: 'Email já está em uso'
       });
@@ -2047,10 +2146,12 @@ app.post('/usuarios', requireRole(['ti', 'diretor']), async (req, res) => {
     const senhaHash = await bcrypt.hash(senhaTemporaria, 10);
 
     // Inserir usuário
-    await db.query(`
+    const insertUser = db.prepare(`
       INSERT INTO usuarios (nome, email, senha_hash, tipo, ano, turma, ativo) 
-      VALUES (?, ?, ?, ?, ?, ?, 1)
-    `, [nome, email, senhaHash, tipo, ano || null, turma || null]);
+      VALUES (?, ?, ?, ?, ?, ?, 'sim')
+    `);
+    
+    insertUser.run(nome, email, senhaHash, tipo, ano || null, turma || null);
 
     // Redirecionar com sucesso
     res.redirect('/usuarios?success=Usuário criado com sucesso');
@@ -2058,10 +2159,10 @@ app.post('/usuarios', requireRole(['ti', 'diretor']), async (req, res) => {
   } catch (error) {
     console.error('Erro ao criar usuário:', error);
     const db = getDatabase();
-    const usuariosResult = await db.query('SELECT id, nome, email, tipo, ativo, ano, turma FROM usuarios ORDER BY nome');
+    const usuariosResult = db.prepare('SELECT id, nome, email, tipo, ativo, ano, turma FROM usuarios ORDER BY nome').all();
     
     res.render('usuarios', { 
-      usuarios: usuariosResult.rows,
+      usuarios: usuariosResult,
       user: req.session.user,
       error: 'Erro interno do servidor'
     });
@@ -2418,8 +2519,14 @@ app.post('/admin/editar/:id', requireRole(['diretor']), async (req, res) => {
       let counter = 1;
 
       while (true) {
-        const existingSlug = await db.query('SELECT id FROM noticias WHERE slug = $1 AND id != $2', [slug, id]);
-        if (existingSlug.rows.length === 0) {
+        const existingSlug = await new Promise((resolve, reject) => {
+          db.get('SELECT id FROM noticias WHERE slug = ? AND id != ?', [slug, id], (err, row) => {
+            if (err) reject(err);
+            else resolve(row);
+          });
+        });
+        
+        if (!existingSlug) {
           break;
         }
         slug = `${baseSlug}-${counter}`;
@@ -2427,10 +2534,16 @@ app.post('/admin/editar/:id', requireRole(['diretor']), async (req, res) => {
       }
     }
 
-    await db.query(
-      'UPDATE noticias SET titulo = $1, slug = $2, conteudo = $3, categoria = $4, imagem_url = $5 WHERE id = $6', 
-      [titulo, slug, conteudo, categoria, imagem_url || null, id]
-    );
+    await new Promise((resolve, reject) => {
+      db.run(
+        'UPDATE noticias SET titulo = ?, slug = ?, conteudo = ?, categoria = ?, imagem_url = ? WHERE id = ?', 
+        [titulo, slug, conteudo, categoria, imagem_url || null, id],
+        (err) => {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
 
     res.redirect('/admin');
   } catch (error) {
@@ -2949,8 +3062,12 @@ app.post('/perfil/alterar-senha', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Erro ao solicitar alteração de senha:', error);
     const db = getDatabase();
-    const result = await db.query('SELECT id, nome, email, tipo, ano, turma FROM usuarios WHERE id = $1', [req.session.userId]);
-    const usuario = result.rows[0];
+    const usuario = await new Promise((resolve, reject) => {
+      db.get('SELECT id, nome, email, tipo, ano, turma FROM usuarios WHERE id = ?', [req.session.userId], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
 
     res.render('perfil', { 
       user: usuario || req.session.user,

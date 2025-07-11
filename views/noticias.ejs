@@ -1,0 +1,155 @@
+<%- include('layout', { title: 'Notícias - CMBM' }) %>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">Todas as Notícias</h1>
+            
+            <!-- Filtros de Busca -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="GET" action="/noticias" class="row g-3">
+                        <div class="col-md-4">
+                            <input type="text" 
+                                   class="form-control" 
+                                   name="busca" 
+                                   placeholder="Buscar notícias..."
+                                   value="<%= busca %>">
+                        </div>
+                        <div class="col-md-4">
+                            <select name="categoria" class="form-select">
+                                <option value="">Todas as categorias</option>
+                                <% categorias.forEach(cat => { %>
+                                    <option value="<%= cat %>" <%= categoria === cat ? 'selected' : '' %>>
+                                        <%= cat.charAt(0).toUpperCase() + cat.slice(1) %>
+                                    </option>
+                                <% }) %>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-2"></i>Buscar
+                                </button>
+                                <a href="/noticias" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times me-2"></i>Limpar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Lista de Notícias -->
+            <div class="row">
+                <% if (noticias && noticias.length > 0) { %>
+                    <% noticias.forEach(noticia => { %>
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card h-100 shadow-sm">
+                                <% if (noticia.imagem_url) { %>
+                                    <img src="<%= noticia.imagem_url %>" 
+                                         class="card-img-top" 
+                                         alt="<%= noticia.titulo %>"
+                                         style="height: 200px; object-fit: cover;">
+                                <% } %>
+                                <div class="card-body d-flex flex-column">
+                                    <span class="badge bg-primary mb-2 align-self-start">
+                                        <%= noticia.categoria ? noticia.categoria.charAt(0).toUpperCase() + noticia.categoria.slice(1) : 'Geral' %>
+                                    </span>
+                                    <h5 class="card-title">
+                                        <a href="/noticia/<%= noticia.slug %>" class="text-decoration-none">
+                                            <%= noticia.titulo %>
+                                        </a>
+                                    </h5>
+                                    <p class="card-text flex-grow-1">
+                                        <%= noticia.conteudo.substring(0, 120) %>...
+                                    </p>
+                                    <div class="mt-auto">
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar-alt me-1"></i>
+                                            <%= new Date(noticia.data_criacao).toLocaleDateString('pt-BR') %>
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-transparent">
+                                    <a href="/noticia/<%= noticia.slug %>" class="btn btn-outline-primary btn-sm">
+                                        Ler mais <i class="fas fa-arrow-right ms-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="col-12">
+                        <div class="alert alert-info text-center">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Nenhuma notícia encontrada.
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+
+            <!-- Paginação -->
+            <% if (totalPages > 1) { %>
+                <nav aria-label="Paginação das notícias">
+                    <ul class="pagination justify-content-center">
+                        <% if (currentPage > 1) { %>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=<%= currentPage - 1 %>&categoria=<%= categoria %>&busca=<%= busca %>">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                        <% } %>
+                        
+                        <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+                            <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                                <a class="page-link" href="?page=<%= i %>&categoria=<%= categoria %>&busca=<%= busca %>">
+                                    <%= i %>
+                                </a>
+                            </li>
+                        <% } %>
+                        
+                        <% if (currentPage < totalPages) { %>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=<%= currentPage + 1 %>&categoria=<%= categoria %>&busca=<%= busca %>">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        <% } %>
+                    </ul>
+                </nav>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-title a {
+    color: inherit;
+}
+
+.card-title a:hover {
+    color: #0d6efd;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.pagination .page-link {
+    color: #0d6efd;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+</style>
