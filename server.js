@@ -3808,12 +3808,9 @@ app.post('/perfil/confirmar-alteracao', requireAuth, async (req, res) => {
       });
     });
 
-    // Atualizar senha no banco
-    const bcrypt = require('bcrypt');
-    const hashedPassword = await bcrypt.hash(resetData.new_password, 10);
-    
+    // Atualizar senha no banco (resetData.observacoes já contém o hash)
     await new Promise((resolve, reject) => {
-      db.run('UPDATE usuarios SET senha_hash = ? WHERE id = ?', [hashedPassword, req.session.userId], (err) => {
+      db.run('UPDATE usuarios SET senha_hash = ? WHERE id = ?', [resetData.observacoes, req.session.userId], (err) => {
         if (err) reject(err);
         else resolve();
       });
@@ -3879,7 +3876,7 @@ app.post('/perfil/verificar-codigo', requireAuth, async (req, res) => {
       });
     }
 
-    // Atualizar senha
+    // Atualizar senha (resetData.observacoes já contém o hash da nova senha)
     await new Promise((resolve, reject) => {
       db.run('UPDATE usuarios SET senha_hash = ? WHERE id = ?', [resetData.observacoes, req.session.userId], (err) => {
         if (err) reject(err);
