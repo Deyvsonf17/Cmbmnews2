@@ -109,7 +109,7 @@ function getTransporter() {
 // Função para criar template de email profissional
 function createEmailTemplate(title, content, hasLogo = true) {
   const baseUrl = BASE_URL;
-  const logoUrl = hasLogo ? `${baseUrl}/public/logo.png` : '';
+  const logoUrl = hasLogo ? `${baseUrl}/logo.png` : '';
 
   // Substituir URLs do localhost no conteúdo
   content = content.replace(/http:\/\/localhost:5000/g, baseUrl);
@@ -3497,8 +3497,6 @@ setInterval(() => {
   // Heartbeat para manter o processo ativo
 }, 30000);
 
-startServer();
-
 // Rota para redefinir senha com token direto (DEVE VIR ANTES da rota genérica)
 app.get('/redefinir-senha/token/:token', async (req, res) => {
   try {
@@ -4411,5 +4409,12 @@ app.get('/contato', (req, res) => {
     title: 'Entre em Contato'
   });
 });
+
+// Inicializar servidor após todas as rotas
+startServer();
+
+// Middleware para tratamento de erros (deve ser o último)
+app.use(errorHandler);
+app.use(notFoundHandler);
 
 // Servidor inicializado com sucesso
