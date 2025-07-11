@@ -1,0 +1,215 @@
+<div class="row">
+    <div class="col-12">
+        <!-- Header do painel -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-navy">
+                <i class="fas fa-cog me-2"></i>
+                Painel Administrativo
+            </h1>
+            <a href="/admin/nova" class="btn btn-success">
+                <i class="fas fa-plus me-1"></i>
+                Nova Notícia
+            </a>
+        </div>
+
+        <!-- Estatísticas -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-newspaper fa-2x mb-2"></i>
+                        <h4><%= noticias.length %></h4>
+                        <p class="mb-0">Total de Notícias</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-eye fa-2x mb-2"></i>
+                        <h4>Público</h4>
+                        <p class="mb-0">Site Visível</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-calendar fa-2x mb-2"></i>
+                        <h4><%= new Date().toLocaleDateString('pt-BR') %></h4>
+                        <p class="mb-0">Data Atual</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body text-center">
+                        <i class="fas fa-user-shield fa-2x mb-2"></i>
+                        <h4>Admin</h4>
+                        <p class="mb-0">Logado</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de notícias para gerenciar -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Gerenciar Notícias
+                </h5>
+            </div>
+            <div class="card-body">
+                <% if (noticias && noticias.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Título</th>
+                                    <th>Data de Criação</th>
+                                    <th>Imagem</th>
+                                    <th class="text-center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% noticias.forEach(function(noticia) { %>
+                                    <tr>
+                                        <td>
+                                            <strong class="text-navy">#<%= noticia.id %></strong>
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold"><%= noticia.titulo %></div>
+                                            <small class="text-muted">
+                                                <%= noticia.conteudo.substring(0, 80) %>
+                                                <% if (noticia.conteudo.length > 80) { %>...
+                                                <% } %>
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <small>
+                                                <%= new Date(noticia.data_criacao).toLocaleDateString('pt-BR') %><br>
+                                                <%= new Date(noticia.data_criacao).toLocaleTimeString('pt-BR') %>
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <% if (noticia.imagem_url) { %>
+                                                <i class="fas fa-image text-success" title="Com imagem"></i>
+                                            <% } else { %>
+                                                <i class="fas fa-image text-muted" title="Sem imagem"></i>
+                                            <% } %>
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a href="/noticia/<%= noticia.slug || 'id/' + noticia.id %>" 
+                                                   class="btn btn-outline-primary" 
+                                                   title="Visualizar"
+                                                   target="_blank">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="/admin/editar/<%= noticia.id %>" 
+                                                   class="btn btn-outline-warning" 
+                                                   title="Editar">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <button type="button" 
+                                                        class="btn btn-outline-danger" 
+                                                        title="Excluir"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#deleteModal<%= noticia.id %>">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Modal de confirmação de exclusão -->
+                                    <div class="modal fade" id="deleteModal<%= noticia.id %>" tabindex="-1" aria-labelledby="deleteModalLabel<%= noticia.id %>" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header bg-danger text-white">
+                                                    <h5 class="modal-title" id="deleteModalLabel<%= noticia.id %>">
+                                                        <i class="fas fa-exclamation-triangle me-2"></i>
+                                                        Confirmar Exclusão
+                                                    </h5>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="text-center mb-3">
+                                                        <i class="fas fa-newspaper text-danger" style="font-size: 3rem;"></i>
+                                                    </div>
+                                                    <p class="text-center mb-3">Deseja excluir a notícia:</p>
+                                                    <div class="alert alert-warning">
+                                                        <strong><%= noticia.titulo %></strong>
+                                                    </div>
+                                                    <p class="text-muted text-center mb-0">
+                                                        <i class="fas fa-warning me-1"></i>
+                                                        Esta ação não pode ser desfeita.
+                                                    </p>
+                                                </div>
+                                                <div class="modal-footer justify-content-center">
+                                                    <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">
+                                                        <i class="fas fa-times me-1"></i>
+                                                        Cancelar
+                                                    </button>
+                                                    <form method="POST" action="/excluir/<%= noticia.id %>" class="d-inline">
+                                                        <button type="submit" class="btn btn-danger">
+                                                            <i class="fas fa-trash me-1"></i>
+                                                            Confirmar Exclusão
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <!-- Estado vazio -->
+                    <div class="text-center py-5">
+                        <i class="fas fa-newspaper text-muted mb-3" style="font-size: 3rem;"></i>
+                        <h4 class="text-muted">Nenhuma notícia cadastrada</h4>
+                        <p class="text-muted">Comece criando sua primeira notícia.</p>
+                        <a href="/admin/nova" class="btn btn-success">
+                            <i class="fas fa-plus me-1"></i>
+                            Criar Primeira Notícia
+                        </a>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Links rápidos -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <i class="fas fa-globe fa-2x text-primary mb-2"></i>
+                        <h5>Visualizar Site</h5>
+                        <p class="text-muted">Veja como o site está aparecendo para os visitantes</p>
+                        <a href="/" target="_blank" class="btn btn-primary">
+                            <i class="fas fa-external-link-alt me-1"></i>
+                            Abrir Site
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card bg-light">
+                    <div class="card-body text-center">
+                        <i class="fas fa-sign-out-alt fa-2x text-danger mb-2"></i>
+                        <h5>Encerrar Sessão</h5>
+                        <p class="text-muted">Faça logout com segurança do painel administrativo</p>
+                        <a href="/logout" class="btn btn-danger">
+                            <i class="fas fa-sign-out-alt me-1"></i>
+                            Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

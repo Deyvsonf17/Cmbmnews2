@@ -1,0 +1,80 @@
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-warning text-dark text-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    Verificação de Código
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Digite o código de 5 dígitos enviado para seu email
+                    </div>
+                </div>
+
+                <% if (typeof error !== 'undefined' && error) { %>
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <%= error %>
+                    </div>
+                <% } %>
+
+                <% if (typeof success !== 'undefined' && success) { %>
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <%= success %>
+                    </div>
+                <% } %>
+
+                <form method="POST" action="/perfil/confirmar-alteracao">
+                    <div class="mb-3">
+                        <label for="codigo" class="form-label">Código de Verificação</label>
+                        <input type="text" 
+                               class="form-control form-control-lg text-center" 
+                               id="codigo" 
+                               name="codigo" 
+                               maxlength="5" 
+                               placeholder="Ex: A1B2C"
+                               style="letter-spacing: 0.5em; font-weight: bold; font-size: 1.2em;"
+                               required>
+                        <small class="form-text text-muted">
+                            O código possui 5 caracteres (letras e números)
+                        </small>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-warning btn-lg">
+                            <i class="fas fa-check me-2"></i>
+                            Confirmar Alteração
+                        </button>
+                        <a href="/perfil" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Voltar ao Perfil
+                        </a>
+                    </div>
+                </form>
+
+                <div class="mt-4 text-center">
+                    <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i>
+                        Este código expira em 10 minutos
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Converter automaticamente para maiúsculas
+document.getElementById('codigo').addEventListener('input', function(e) {
+    this.value = this.value.toUpperCase();
+});
+
+// Focar automaticamente no campo
+document.getElementById('codigo').focus();
+</script>

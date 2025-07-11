@@ -1,0 +1,249 @@
+
+<div class="min-vh-100 d-flex flex-column bg-light">
+    <!-- Header da página -->
+    <div class="bg-navy text-white py-3">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1 class="h4 mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        CMBM NEWS - Portal Seguro
+                    </h1>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteúdo principal -->
+    <main class="flex-grow-1 py-4">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-8 col-lg-6 col-xl-5">
+                    <!-- Card principal -->
+                    <div class="card shadow-lg border-0 rounded-4">
+                        <div class="card-header bg-primary text-white text-center py-4 rounded-top-4">
+                            <div class="mb-3">
+                                <i class="fas fa-key fa-3x"></i>
+                            </div>
+                            <h2 class="h4 mb-0 fw-bold">Definir Nova Senha</h2>
+                            <p class="mb-0 opacity-75">Crie uma senha segura para sua conta</p>
+                        </div>
+
+                        <div class="card-body p-4">
+                            <!-- Alertas -->
+                            <% if (typeof error !== 'undefined' && error) { %>
+                                <div class="alert alert-danger border-0 rounded-3 mb-4">
+                                    <div class="d-flex align-items-start">
+                                        <i class="fas fa-exclamation-triangle me-3 mt-1 flex-shrink-0"></i>
+                                        <div><%= error %></div>
+                                    </div>
+                                </div>
+                            <% } %>
+
+                            <% if (typeof success !== 'undefined' && success) { %>
+                                <div class="alert alert-success border-0 rounded-3 mb-4">
+                                    <div class="d-flex align-items-start">
+                                        <i class="fas fa-check-circle me-3 mt-1 flex-shrink-0"></i>
+                                        <div><%= success %></div>
+                                    </div>
+                                </div>
+                            <% } %>
+
+                            <!-- Informações de segurança -->
+                            <div class="alert alert-info border-0 rounded-3 mb-4">
+                                <h6 class="alert-heading mb-2">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Requisitos da senha:
+                                </h6>
+                                <ul class="mb-0 small">
+                                    <li>Mínimo de 8 caracteres</li>
+                                    <li>Pelo menos uma letra maiúscula</li>
+                                    <li>Pelo menos uma letra minúscula</li>
+                                    <li>Pelo menos um número</li>
+                                </ul>
+                            </div>
+
+                            <!-- Formulário -->
+                            <form method="POST" action="/redefinir-senha/nova" class="needs-validation" novalidate>
+                                <input type="hidden" name="userId" value="<%= typeof userId !== 'undefined' ? userId : '' %>">
+                                <input type="hidden" name="token" value="<%= typeof token !== 'undefined' ? token : '' %>">
+                                
+                                <div class="mb-4">
+                                    <label for="senha" class="form-label fw-semibold">
+                                        <i class="fas fa-lock me-2 text-primary"></i>
+                                        Nova Senha
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control form-control-lg" 
+                                               id="senha" name="senha" required
+                                               minlength="8"
+                                               pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$"
+                                               placeholder="Digite sua nova senha">
+                                        <button class="btn btn-outline-secondary" type="button" id="toggleSenha">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div class="invalid-feedback">
+                                        Por favor, digite uma senha que atenda aos requisitos.
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <label for="confirmar-senha" class="form-label fw-semibold">
+                                        <i class="fas fa-lock me-2 text-primary"></i>
+                                        Confirmar Nova Senha
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="password" class="form-control form-control-lg" 
+                                               id="confirmar-senha" name="confirmarSenha" required
+                                               placeholder="Confirme sua nova senha">
+                                        <button class="btn btn-outline-secondary" type="button" id="toggleConfirmar">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </div>
+                                    <div class="invalid-feedback">
+                                        As senhas não coincidem.
+                                    </div>
+                                </div>
+
+                                <div class="d-grid gap-3">
+                                    <button type="submit" class="btn btn-primary btn-lg py-3">
+                                        <i class="fas fa-save me-2"></i>
+                                        Alterar Senha
+                                    </button>
+
+                                    <a href="/login" class="btn btn-outline-secondary btn-lg py-3">
+                                        <i class="fas fa-arrow-left me-2"></i>
+                                        Voltar ao Login
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Dicas de segurança -->
+                    <div class="card mt-4 border-0 bg-light">
+                        <div class="card-body p-3">
+                            <h6 class="card-title text-success mb-2">
+                                <i class="fas fa-lightbulb me-2"></i>
+                                Dicas de Segurança
+                            </h6>
+                            <ul class="list-unstyled small text-muted mb-0">
+                                <li><i class="fas fa-check me-2 text-success"></i>Use uma senha única para cada conta</li>
+                                <li><i class="fas fa-check me-2 text-success"></i>Evite informações pessoais na senha</li>
+                                <li><i class="fas fa-check me-2 text-success"></i>Mantenha sua senha em local seguro</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Rodapé fixo -->
+    <footer class="bg-dark text-white py-4 mt-auto">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="fw-bold mb-2">
+                        <i class="fas fa-school me-2"></i>
+                        Colégio Municipal Baltazar Moreno
+                    </h6>
+                    <p class="small mb-1">
+                        <i class="fas fa-map-marker-alt me-2"></i>
+                        Av. Dr. Sofronio Portela, Centro, 4309
+                    </p>
+                    <p class="small mb-0">
+                        Moreno - PE, Brasil
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <h6 class="fw-bold mb-2">
+                        <i class="fas fa-code me-2"></i>
+                        Site Desenvolvido por
+                    </h6>
+                    <p class="small mb-1">Deyvson Felipe</p>
+                    <p class="small mb-0">Desenvolvedor Web</p>
+                </div>
+            </div>
+            <hr class="my-3 opacity-25">
+            <div class="row">
+                <div class="col text-center">
+                    <p class="small mb-0">
+                        <i class="fas fa-copyright me-1"></i>
+                        <%= new Date().getFullYear() %> CMBM NEWS - Todos os direitos reservados
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.needs-validation');
+    const senhaField = document.getElementById('senha');
+    const confirmarField = document.getElementById('confirmar-senha');
+    const toggleSenha = document.getElementById('toggleSenha');
+    const toggleConfirmar = document.getElementById('toggleConfirmar');
+
+    // Toggle senha
+    toggleSenha.addEventListener('click', function() {
+        const type = senhaField.type === 'password' ? 'text' : 'password';
+        senhaField.type = type;
+        this.querySelector('i').classList.toggle('fa-eye');
+        this.querySelector('i').classList.toggle('fa-eye-slash');
+    });
+
+    // Toggle confirmar senha
+    toggleConfirmar.addEventListener('click', function() {
+        const type = confirmarField.type === 'password' ? 'text' : 'password';
+        confirmarField.type = type;
+        this.querySelector('i').classList.toggle('fa-eye');
+        this.querySelector('i').classList.toggle('fa-eye-slash');
+    });
+
+    // Validação em tempo real
+    function validatePassword() {
+        const senha = senhaField.value;
+        const confirmar = confirmarField.value;
+
+        // Validar senha
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+        if (senha && passwordRegex.test(senha)) {
+            senhaField.classList.remove('is-invalid');
+            senhaField.classList.add('is-valid');
+        } else if (senha) {
+            senhaField.classList.remove('is-valid');
+            senhaField.classList.add('is-invalid');
+        }
+
+        // Validar confirmação
+        if (confirmar && senha === confirmar && passwordRegex.test(senha)) {
+            confirmarField.classList.remove('is-invalid');
+            confirmarField.classList.add('is-valid');
+        } else if (confirmar) {
+            confirmarField.classList.remove('is-valid');
+            confirmarField.classList.add('is-invalid');
+        }
+    }
+
+    senhaField.addEventListener('input', validatePassword);
+    confirmarField.addEventListener('input', validatePassword);
+
+    // Validação do formulário
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity() || senhaField.value !== confirmarField.value) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            if (senhaField.value !== confirmarField.value) {
+                confirmarField.setCustomValidity('As senhas não coincidem');
+            } else {
+                confirmarField.setCustomValidity('');
+            }
+        }
+        form.classList.add('was-validated');
+    });
+});
+</script>

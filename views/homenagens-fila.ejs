@@ -1,0 +1,299 @@
+
+<%- contentFor('body') %>
+
+<div class="container my-5">
+  <div class="row">
+    <div class="col-12">
+      <!-- Header da página -->
+      <div class="page-header text-center mb-5">
+        <h1 class="display-4">
+          <i class="fas fa-list-ol text-primary me-3"></i>
+          Fila de Homenagens
+        </h1>
+        <p class="lead">
+          Gerencie a ordem e agendamento das homenagens aprovadas
+        </p>
+      </div>
+
+      <!-- Informações do sistema -->
+      <div class="row mb-4">
+        <div class="col-md-4">
+          <div class="card text-center bg-info text-white">
+            <div class="card-body">
+              <h3 class="card-title">
+                <i class="fas fa-calendar-week me-2"></i>
+                2
+              </h3>
+              <p class="card-text">Homenagens por Semana</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-4">
+          <div class="card text-center bg-success text-white">
+            <div class="card-body">
+              <h3 class="card-title">
+                <i class="fas fa-check-circle me-2"></i>
+                <%= filaHomenagens.filter(h => h.publicada == 1).length %>
+              </h3>
+              <p class="card-text">Homenagens Publicadas</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-4">
+          <div class="card text-center bg-warning text-white">
+            <div class="card-body">
+              <h3 class="card-title">
+                <i class="fas fa-clock me-2"></i>
+                <%= filaHomenagens.filter(h => h.publicada == 0).length %>
+              </h3>
+              <p class="card-text">Na Fila de Espera</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mensagens -->
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <%= error %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <% } %>
+
+      <!-- Instruções -->
+      <div class="alert alert-info" role="alert">
+        <h6 class="alert-heading">
+          <i class="fas fa-info-circle me-2"></i>
+          Como funciona o sistema:
+        </h6>
+        <ul class="mb-0">
+          <li><strong>Automático:</strong> 2 homenagens são publicadas por semana (segunda e quinta-feira)</li>
+          <li><strong>Reordenar:</strong> Arraste e solte para mudar a ordem da fila</li>
+          <li><strong>Publicar Agora:</strong> Force a publicação imediata de uma homenagem</li>
+          <li><strong>Agenda:</strong> O sistema reagenda automaticamente após reordenações</li>
+        </ul>
+      </div>
+
+      <!-- Fila de homenagens -->
+      <% if (filaHomenagens && filaHomenagens.length > 0) { %>
+        <div class="card shadow-sm">
+          <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+              <i class="fas fa-list me-2"></i>
+              Fila de Publicação
+            </h4>
+            <button id="salvarOrdem" class="btn btn-light btn-sm" style="display: none;">
+              <i class="fas fa-save me-2"></i>
+              Salvar Nova Ordem
+            </button>
+          </div>
+          
+          <div class="card-body p-0">
+            <div id="filaHomenagensList" class="list-group list-group-flush">
+              <% filaHomenagens.forEach((homenagem, index) => { %>
+                <div class="list-group-item homenagem-item" data-id="<%= homenagem.id %>">
+                  <div class="row align-items-center">
+                    <!-- Ordem e ícone de arrastar -->
+                    <div class="col-md-1">
+                      <div class="d-flex align-items-center">
+                        <i class="fas fa-grip-vertical text-muted me-2 drag-handle" style="cursor: grab;"></i>
+                        <span class="badge bg-primary ordem-badge"><%= index + 1 %></span>
+                      </div>
+                    </div>
+                    
+                    <!-- Foto -->
+                    <div class="col-md-2">
+                      <img src="<%= homenagem.foto_principal %>" 
+                           alt="<%= homenagem.nome %>" 
+                           class="img-fluid rounded shadow-sm"
+                           style="height: 80px; width: 80px; object-fit: cover;">
+                    </div>
+                    
+                    <!-- Informações -->
+                    <div class="col-md-6">
+                      <h6 class="mb-1"><%= homenagem.nome %></h6>
+                      <p class="mb-1 text-muted">
+                        <i class="fas fa-graduation-cap me-1"></i>
+                        <%= homenagem.relacao %>
+                      </p>
+                      <small class="text-muted">
+                        <i class="fas fa-user me-1"></i>
+                        Enviado por: <%= homenagem.autor_nome %>
+                      </small>
+                    </div>
+                    
+                    <!-- Status e ações -->
+                    <div class="col-md-3 text-end">
+                      <% if (homenagem.publicada == 1) { %>
+                        <span class="badge bg-success mb-2">
+                          <i class="fas fa-check-circle me-1"></i>
+                          Publicada
+                        </span>
+                        <br>
+                        <small class="text-muted">
+                          <%= new Date(homenagem.data_agendada).toLocaleDateString('pt-BR') %>
+                        </small>
+                      <% } else if (homenagem.data_agendada) { %>
+                        <span class="badge bg-info mb-2">
+                          <i class="fas fa-calendar me-1"></i>
+                          Agendada
+                        </span>
+                        <br>
+                        <small class="text-muted">
+                          Para: <%= new Date(homenagem.data_agendada).toLocaleDateString('pt-BR') %>
+                        </small>
+                        <br>
+                        <button class="btn btn-sm btn-success mt-1" 
+                                onclick="publicarAgora(<%= homenagem.id %>)">
+                          <i class="fas fa-bolt me-1"></i>
+                          Publicar Agora
+                        </button>
+                      <% } else { %>
+                        <span class="badge bg-warning mb-2">
+                          <i class="fas fa-clock me-1"></i>
+                          Na Fila
+                        </span>
+                        <br>
+                        <button class="btn btn-sm btn-success mt-1" 
+                                onclick="publicarAgora(<%= homenagem.id %>)">
+                          <i class="fas fa-bolt me-1"></i>
+                          Publicar Agora
+                        </button>
+                      <% } %>
+                    </div>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+          </div>
+        </div>
+      <% } else { %>
+        <div class="text-center py-5">
+          <i class="fas fa-list-alt text-muted" style="font-size: 5rem;"></i>
+          <h3 class="text-muted mt-3">Nenhuma homenagem na fila</h3>
+          <p class="text-muted">
+            Quando homenagens forem aprovadas, elas aparecerão aqui.
+          </p>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- Incluir SortableJS -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Configurar arrastar e soltar
+  const lista = document.getElementById('filaHomenagensList');
+  const salvarBtn = document.getElementById('salvarOrdem');
+  
+  if (lista) {
+    const sortable = Sortable.create(lista, {
+      handle: '.drag-handle',
+      animation: 150,
+      onEnd: function(evt) {
+        // Atualizar números de ordem
+        atualizarOrdens();
+        // Mostrar botão salvar
+        salvarBtn.style.display = 'inline-block';
+      }
+    });
+  }
+  
+  // Salvar nova ordem
+  if (salvarBtn) {
+    salvarBtn.addEventListener('click', function() {
+      const items = document.querySelectorAll('.homenagem-item');
+      const novaOrdem = Array.from(items).map(item => parseInt(item.dataset.id));
+      
+      fetch('/homenagens/reordenar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ novaOrdem })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          location.reload();
+        } else {
+          alert('Erro ao salvar ordem: ' + data.error);
+        }
+      })
+      .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao salvar ordem');
+      });
+    });
+  }
+});
+
+function atualizarOrdens() {
+  const items = document.querySelectorAll('.homenagem-item');
+  items.forEach((item, index) => {
+    const badge = item.querySelector('.ordem-badge');
+    badge.textContent = index + 1;
+  });
+}
+
+function publicarAgora(homenagemId) {
+  if (confirm('Confirma a publicação imediata desta homenagem?')) {
+    fetch(`/homenagens/publicar-agora/${homenagemId}`, {
+      method: 'POST'
+    })
+    .then(response => {
+      if (response.ok) {
+        location.reload();
+      } else {
+        alert('Erro ao publicar homenagem');
+      }
+    })
+    .catch(error => {
+      console.error('Erro:', error);
+      alert('Erro ao publicar homenagem');
+    });
+  }
+}
+</script>
+
+<style>
+.homenagem-item {
+  transition: all 0.3s ease;
+  cursor: default;
+}
+
+.homenagem-item:hover {
+  background-color: #f8f9fa;
+}
+
+.drag-handle:hover {
+  cursor: grab !important;
+}
+
+.drag-handle:active {
+  cursor: grabbing !important;
+}
+
+.sortable-ghost {
+  opacity: 0.5;
+}
+
+.sortable-chosen {
+  background-color: #e3f2fd;
+}
+
+.btn-sm {
+  border-radius: 8px;
+}
+
+.ordem-badge {
+  font-size: 14px;
+  font-weight: bold;
+}
+</style>

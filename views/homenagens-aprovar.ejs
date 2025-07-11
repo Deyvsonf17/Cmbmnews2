@@ -1,0 +1,423 @@
+<%- contentFor('body') %>
+
+<div class="container my-5">
+  <div class="row">
+    <div class="col-12">
+      <!-- Header da página -->
+      <div class="page-header text-center mb-5">
+        <h1 class="display-4">
+          <i class="fas fa-heart-pulse text-warning me-3"></i>
+          Aprovar Homenagens
+        </h1>
+        <p class="lead">
+          Revise e aprove as homenagens enviadas pelos repórteres
+        </p>
+      </div>
+
+      <!-- Mensagens de erro/sucesso -->
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <%= error %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <% } %>
+
+      <!-- Mensagens de sucesso via URL -->
+      <% if (typeof req !== 'undefined' && req.query && req.query.success) { %>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          <i class="fas fa-check-circle me-2"></i>
+          <%= req.query.success %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <% } %>
+
+      <!-- Estatísticas -->
+      <div class="row mb-4">
+        <div class="col-md-4">
+          <div class="card text-center bg-warning text-white">
+            <div class="card-body">
+              <h3 class="card-title">
+                <i class="fas fa-clock me-2"></i>
+                <%= homenagensPendentes ? homenagensPendentes.length : 0 %>
+              </h3>
+              <p class="card-text">Homenagens Pendentes</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-4">
+          <div class="card text-center bg-info text-white">
+            <div class="card-body">
+              <h3 class="card-title">
+                <i class="fas fa-user-shield me-2"></i>
+                <%= user.nome %>
+              </h3>
+              <p class="card-text">Editor Responsável</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-4">
+          <div class="card text-center bg-primary text-white">
+            <div class="card-body">
+              <h3 class="card-title">
+                <i class="fas fa-calendar me-2"></i>
+                <%= new Date().toLocaleDateString('pt-BR') %>
+              </h3>
+              <p class="card-text">Data Atual</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Lista de homenagens pendentes -->
+      <% if (homenagensPendentes && homenagensPendentes.length > 0) { %>
+        <div class="row">
+          <% homenagensPendentes.forEach((homenagem, index) => { %>
+            <div class="col-12 mb-4">
+              <div class="card shadow-sm border-0">
+                <div class="card-header bg-light">
+                  <div class="row align-items-center">
+                    <div class="col-md-6">
+                      <h5 class="mb-0">
+                        <i class="fas fa-heart text-danger me-2"></i>
+                        Homenagem #<%= homenagem.id %>
+                      </h5>
+                    </div>
+                    <div class="col-md-6 text-end">
+                      <span class="badge bg-warning text-dark">
+                        <i class="fas fa-clock me-1"></i>
+                        Pendente
+                      </span>
+                      <span class="badge bg-secondary ms-2">
+                        <i class="fas fa-calendar me-1"></i>
+                        <%= new Date(homenagem.data_criacao).toLocaleDateString('pt-BR') %>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="card-body">
+                  <div class="row">
+                    <!-- Foto principal -->
+                    <div class="col-md-3">
+                      <div class="homenagem-foto">
+                        <img src="<%= homenagem.foto_principal %>" 
+                             alt="Foto de <%= homenagem.nome %>" 
+                             class="img-fluid rounded shadow-sm">
+                      </div>
+                    </div>
+                    
+                    <!-- Informações da homenagem -->
+                    <div class="col-md-9">
+                      <h3 class="text-primary mb-3"><%= homenagem.nome %></h3>
+                      
+                      <div class="row mb-3">
+                        <div class="col-md-6">
+                          <strong>Relação com o colégio:</strong><br>
+                          <span class="badge bg-secondary">
+                            <i class="fas fa-graduation-cap me-1"></i>
+                            <%= homenagem.relacao %>
+                          </span>
+                        </div>
+                        <div class="col-md-6">
+                          <strong>Período:</strong><br>
+                          <% if (homenagem.periodo) { %>
+                            <span class="badge bg-info">
+                              <i class="fas fa-calendar me-1"></i>
+                              <%= homenagem.periodo %>
+                            </span>
+                          <% } else { %>
+                            <span class="text-muted">Não informado</span>
+                          <% } %>
+                        </div>
+                      </div>
+                      
+                      <% if (homenagem.frase) { %>
+                        <div class="mb-3">
+                          <strong>Frase de destaque:</strong><br>
+                          <blockquote class="blockquote border-start border-danger border-3 ps-3">
+                            <p class="mb-0 fst-italic text-danger">
+                              "<%= homenagem.frase %>"
+                            </p>
+                          </blockquote>
+                        </div>
+                      <% } %>
+                      
+                      <div class="mb-3">
+                        <strong>Texto da homenagem:</strong><br>
+                        <div class="homenagem-texto-preview">
+                          <%= homenagem.texto %>
+                        </div>
+                      </div>
+                      
+                      <div class="mb-3">
+                        <strong>Enviado por:</strong>
+                        <span class="badge bg-primary">
+                          <i class="fas fa-user me-1"></i>
+                          <%= homenagem.autor_nome %>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Galeria de fotos -->
+                  <% if (homenagem.fotos && homenagem.fotos.length > 0) { %>
+                    <div class="row mt-4">
+                      <div class="col-12">
+                        <h6 class="border-bottom pb-2">
+                          <i class="fas fa-images me-2"></i>
+                          Galeria de Fotos (<%= homenagem.fotos.length %>)
+                        </h6>
+                        <div class="row g-2">
+                          <% homenagem.fotos.forEach((foto, fotoIndex) => { %>
+                            <div class="col-md-2 col-4">
+                              <img src="<%= foto.url_foto %>" 
+                                   alt="Foto <%= fotoIndex + 1 %>" 
+                                   class="img-fluid rounded shadow-sm gallery-thumb"
+                                   data-bs-toggle="modal" 
+                                   data-bs-target="#modalFoto<%= homenagem.id %>_<%= fotoIndex %>">
+                            </div>
+                            
+                            <!-- Modal para visualizar foto -->
+                            <div class="modal fade" id="modalFoto<%= homenagem.id %>_<%= fotoIndex %>" tabindex="-1">
+                              <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                  <div class="modal-header">
+                                    <h5 class="modal-title">Foto <%= fotoIndex + 1 %> - <%= homenagem.nome %></h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                  </div>
+                                  <div class="modal-body text-center">
+                                    <img src="<%= foto.url_foto %>" 
+                                         alt="Foto <%= fotoIndex + 1 %>" 
+                                         class="img-fluid rounded">
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          <% }) %>
+                        </div>
+                      </div>
+                    </div>
+                  <% } %>
+                  
+                  <!-- Botões de ação -->
+                  <div class="row mt-4">
+                    <div class="col-12">
+                      <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-success" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#modalAprovar<%= homenagem.id %>">
+                          <i class="fas fa-check me-2"></i>
+                          Aprovar
+                        </button>
+                        
+                        <button type="button" class="btn btn-danger" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#modalReprovar<%= homenagem.id %>">
+                          <i class="fas fa-times me-2"></i>
+                          Reprovar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Modal para aprovar -->
+            <div class="modal fade" id="modalAprovar<%= homenagem.id %>" tabindex="-1">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">
+                      <i class="fas fa-check me-2"></i>
+                      Aprovar Homenagem
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <p><strong>Confirma a aprovação da homenagem para:</strong></p>
+                    <p class="text-primary"><%= homenagem.nome %></p>
+                    <p class="text-muted">
+                      A homenagem será publicada imediatamente na página de homenagens.
+                    </p>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                      Cancelar
+                    </button>
+                    <form method="POST" action="/homenagens/aprovar/<%= homenagem.id %>" class="d-inline">
+                      <input type="hidden" name="action" value="aprovar">
+                      <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check me-2"></i>
+                        Confirmar Aprovação
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Modal para reprovar -->
+            <div class="modal fade" id="modalReprovar<%= homenagem.id %>" tabindex="-1">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                      <i class="fas fa-times me-2"></i>
+                      Reprovar Homenagem
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body">
+                    <p><strong>Reprovar a homenagem para:</strong></p>
+                    <p class="text-primary"><%= homenagem.nome %></p>
+                    
+                    <form method="POST" action="/homenagens/aprovar/<%= homenagem.id %>" id="formReprovar<%= homenagem.id %>">
+                      <input type="hidden" name="action" value="reprovar">
+                      <div class="mb-3">
+                        <label for="motivo<%= homenagem.id %>" class="form-label">
+                          <i class="fas fa-comment me-1"></i>
+                          Motivo da reprovação:
+                        </label>
+                        <textarea class="form-control" id="motivo<%= homenagem.id %>" name="motivo" rows="3" 
+                                  placeholder="Explique o motivo da reprovação para o autor..."></textarea>
+                      </div>
+                    </form>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                      Cancelar
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="document.getElementById('formReprovar<%= homenagem.id %>').submit()">
+                      <i class="fas fa-times me-2"></i>
+                      Confirmar Reprovação
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <div class="text-center py-5">
+          <i class="fas fa-check-circle text-success" style="font-size: 5rem;"></i>
+          <h3 class="text-muted mt-3">Nenhuma homenagem pendente</h3>
+          <p class="text-muted">
+            Todas as homenagens foram processadas. Parabéns pelo trabalho!
+          </p>
+          <a href="/homenagens" class="btn btn-primary btn-lg mt-3">
+            <i class="fas fa-heart me-2"></i>
+            Ver Homenagens Publicadas
+          </a>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<style>
+.homenagem-foto img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.homenagem-texto-preview {
+  max-height: 120px;
+  overflow-y: auto;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 5px;
+  border-left: 4px solid #007bff;
+}
+
+.homenagem-texto-preview::-webkit-scrollbar {
+  width: 6px;
+}
+
+.homenagem-texto-preview::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.homenagem-texto-preview::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+.gallery-thumb {
+  width: 100%;
+  height: 80px;
+  object-fit: cover;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.gallery-thumb:hover {
+  transform: scale(1.05);
+}
+
+.card {
+  border-radius: 15px;
+  overflow: hidden;
+}
+
+.btn {
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.btn-success:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+}
+
+.btn-danger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+}
+
+.page-header h1 {
+  color: #ffc107;
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .homenagem-foto img {
+    height: 150px;
+    margin-bottom: 15px;
+  }
+  
+  .gallery-thumb {
+    height: 60px;
+  }
+  
+  .d-flex.gap-2 {
+    flex-direction: column;
+  }
+  
+  .d-flex.gap-2 .btn {
+    width: 100%;
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Animar cards quando a página carregar
+  const cards = document.querySelectorAll('.card');
+  cards.forEach((card, index) => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    
+    setTimeout(() => {
+      card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0)';
+    }, index * 150);
+  });
+});
+</script>

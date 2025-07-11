@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Usuário - CMBM NEWS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .card {
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            border: none;
+        }
+        .btn-primary {
+            background-color: #1e3a8a;
+            border-color: #1e3a8a;
+        }
+        .btn-primary:hover {
+            background-color: #1e40af;
+            border-color: #1e40af;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">Editar Usuário</h4>
+                    </div>
+                    <div class="card-body">
+                        <% if (error) { %>
+                            <div class="alert alert-danger">
+                                <%= error %>
+                            </div>
+                        <% } %>
+
+                        <form action="/usuarios/<%= usuario.id %>/edit" method="POST">
+                            <div class="mb-3">
+                                <label for="nome" class="form-label">Nome Completo *</label>
+                                <input type="text" class="form-control" id="nome" name="nome" value="<%= usuario.nome %>" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="email" name="email" value="<%= usuario.email %>" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="senha" class="form-label">Nova Senha</label>
+                                <input type="password" class="form-control" id="senha" name="senha">
+                                <small class="form-text text-muted">Deixe em branco para manter a senha atual</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="tipo" class="form-label">Tipo de Usuário *</label>
+                                <select class="form-select" id="tipo" name="tipo" required onchange="toggleAlunoFields()">
+                                    <% if (user && user.tipo === 'diretor') { %>
+                                        <option value="diretor" <%= usuario.tipo === 'diretor' ? 'selected' : '' %>>Admin</option>
+                                    <% } %>
+                                    <option value="editor" <%= usuario.tipo === 'editor' ? 'selected' : '' %>>Editor</option>
+                                    <option value="aluno" <%= usuario.tipo === 'aluno' ? 'selected' : '' %>>Aluno</option>
+                                    <option value="ti" <%= usuario.tipo === 'ti' ? 'selected' : '' %>>TI</option>
+                                </select>
+                            </div>
+
+                            <!-- Campos específicos para alunos -->
+                            <div id="alunoFields" style="<%= usuario.tipo === 'aluno' ? '' : 'display: none;' %>">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="ano" class="form-label">Série *</label>
+                                            <select class="form-select" id="ano" name="ano">
+                                                <option value="">Selecione a série</option>
+                                                <option value="6º ano" <%= usuario.ano === '6º ano' ? 'selected' : '' %>>6º ano</option>
+                                                <option value="7º ano" <%= usuario.ano === '7º ano' ? 'selected' : '' %>>7º ano</option>
+                                                <option value="8º ano" <%= usuario.ano === '8º ano' ? 'selected' : '' %>>8º ano</option>
+                                                <option value="9º ano" <%= usuario.ano === '9º ano' ? 'selected' : '' %>>9º ano</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="turma" class="form-label">Turma *</label>
+                                            <select class="form-select" id="turma" name="turma">
+                                                <option value="">Selecione a turma</option>
+                                                <option value="A" <%= usuario.turma === 'A' ? 'selected' : '' %>>A</option>
+                                                <option value="B" <%= usuario.turma === 'B' ? 'selected' : '' %>>B</option>
+                                                <option value="C" <%= usuario.turma === 'C' ? 'selected' : '' %>>C</option>
+                                                <option value="D" <%= usuario.turma === 'D' ? 'selected' : '' %>>D</option>
+                                                <option value="E" <%= usuario.turma === 'E' ? 'selected' : '' %>>E</option>
+                                                <option value="F" <%= usuario.turma === 'F' ? 'selected' : '' %>>F</option>
+                                                <option value="G" <%= usuario.turma === 'G' ? 'selected' : '' %>>G</option>
+                                                <option value="H" <%= usuario.turma === 'H' ? 'selected' : '' %>>H</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                                <a href="/ti" class="btn btn-secondary">Cancelar</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleAlunoFields() {
+            const tipo = document.getElementById('tipo').value;
+            const alunoFields = document.getElementById('alunoFields');
+            const anoSelect = document.getElementById('ano');
+            const turmaSelect = document.getElementById('turma');
+            
+            if (tipo === 'aluno') {
+                alunoFields.style.display = 'block';
+                anoSelect.required = true;
+                turmaSelect.required = true;
+            } else {
+                alunoFields.style.display = 'none';
+                anoSelect.required = false;
+                turmaSelect.required = false;
+                anoSelect.value = '';
+                turmaSelect.value = '';
+            }
+        }
+
+        // Inicializar campos ao carregar
+        document.addEventListener('DOMContentLoaded', toggleAlunoFields);
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

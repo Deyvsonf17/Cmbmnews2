@@ -1,0 +1,260 @@
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="fas fa-user-circle text-info me-2"></i>
+                Meu Perfil
+            </h2>
+            <a href="/dashboard" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>
+                Voltar
+            </a>
+        </div>
+    </div>
+</div>
+
+<% if (typeof error !== 'undefined' && error) { %>
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <%= error %>
+    </div>
+<% } %>
+
+<% if (typeof success !== 'undefined' && success) { %>
+    <div class="alert alert-success">
+        <i class="fas fa-check-circle me-2"></i>
+        <%= success %>
+    </div>
+<% } %>
+
+<div class="row">
+    <!-- Foto de Perfil -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-camera me-2"></i>
+                    Foto de Perfil
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <% if (user.foto_perfil) { %>
+                        <img src="<%= user.foto_perfil %>" alt="Foto de Perfil" class="rounded-circle" style="width: 150px; height: 150px; object-fit: cover; border: 3px solid #007bff;">
+                    <% } else { %>
+                        <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center mx-auto" style="width: 150px; height: 150px; border: 3px solid #6c757d;">
+                            <i class="fas fa-user text-white" style="font-size: 60px;"></i>
+                        </div>
+                    <% } %>
+                </div>
+
+                <form method="POST" action="/perfil/foto" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <input type="file" class="form-control" id="foto" name="foto" accept="image/*">
+                        <small class="form-text text-muted">Formatos aceitos: JPG, PNG, WEBP (máx. 2MB)</small>
+                    </div>
+                    <button type="submit" class="btn btn-info">
+                        <i class="fas fa-upload me-2"></i>
+                        Alterar Foto
+                    </button>
+                </form>
+
+                <% if (user.foto_perfil) { %>
+                    <form method="POST" action="/perfil/remover-foto" class="mt-2">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                            <i class="fas fa-trash me-1"></i>
+                            Remover Foto
+                        </button>
+                    </form>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informações do Perfil -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-navy text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Informações Pessoais
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Nome:</label>
+                            <p class="form-control-static border p-2 rounded bg-light">
+                                <i class="fas fa-user me-2 text-primary"></i>
+                                <%= user.nome || 'Não informado' %>
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Email:</label>
+                            <p class="form-control-static border p-2 rounded bg-light">
+                                <i class="fas fa-envelope me-2 text-primary"></i>
+                                <%= user.email || 'Não informado' %>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tipo de Usuário:</label>
+                            <p class="form-control-static">
+                                <% 
+                                let tipoClass = 'secondary';
+                                let tipoIcon = 'fas fa-user';
+                                let tipoText = user.tipo;
+
+                                switch(user.tipo) {
+                                    case 'diretor':
+                                        tipoClass = 'danger';
+                                        tipoIcon = 'fas fa-crown';
+                                        tipoText = 'Administrador';
+                                        break;
+                                    case 'editor':
+                                        tipoClass = 'warning';
+                                        tipoIcon = 'fas fa-edit';
+                                        tipoText = 'Editor';
+                                        break;
+                                    case 'aluno':
+                                        tipoClass = 'primary';
+                                        tipoIcon = 'fas fa-user-graduate';
+                                        tipoText = 'Aluno';
+                                        break;
+                                    case 'ti':
+                                        tipoClass = 'info';
+                                        tipoIcon = 'fas fa-cogs';
+                                        tipoText = 'TI';
+                                        break;
+                                }
+                                %>
+                                <span class="badge bg-<%= tipoClass %> fs-6 p-2">
+                                    <i class="<%= tipoIcon %> me-1"></i>
+                                    <%= tipoText %>
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <% if (user.tipo === 'aluno' && (user.ano || user.turma)) { %>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Série/Turma:</label>
+                                <p class="form-control-static border p-2 rounded bg-light">
+                                    <i class="fas fa-graduation-cap me-2 text-success"></i>
+                                    <%= user.ano || 'Não informado' %> - Turma <%= user.turma || 'Não informada' %>
+                                </p>
+                            </div>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alteração de Senha -->
+        <div class="card mt-3">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-key me-2"></i>
+                    Alterar Senha
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="/perfil/alterar-senha">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label for="senhaAtual" class="form-label">Senha Atual *</label>
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="senhaAtual" 
+                                       name="senhaAtual" 
+                                       required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="novaSenha" class="form-label">Nova Senha *</label>
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="novaSenha" 
+                                       name="novaSenha" 
+                                       minlength="6"
+                                       required>
+                                <small class="form-text text-muted">Mínimo 6 caracteres</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="confirmarSenha" class="form-label">Confirmar Nova Senha *</label>
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="confirmarSenha" 
+                                       name="confirmarSenha" 
+                                       minlength="6"
+                                       required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-save me-2"></i>
+                            Alterar Senha
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Informações de Segurança -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    Dicas de Segurança
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Use senhas com pelo menos 6 caracteres
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Misture letras, números e símbolos
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Não compartilhe sua senha
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Altere sua senha regularmente
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

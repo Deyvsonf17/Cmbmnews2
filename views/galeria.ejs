@@ -1,0 +1,123 @@
+
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item">
+                                <a href="/">
+                                    <i class="fas fa-home me-1"></i>
+                                    Início
+                                </a>
+                            </li>
+                            <li class="breadcrumb-item active" aria-current="page">Galeria</li>
+                        </ol>
+                    </nav>
+                    <h1 class="mb-0">
+                        <i class="fas fa-images me-2"></i>
+                        Galeria de Fotos
+                    </h1>
+                </div>
+                <div class="btn-group">
+                    <a href="/" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>
+                        Voltar ao Início
+                    </a>
+                    <% if (typeof user !== 'undefined' && user && (user.tipo === 'aluno' || user.tipo === 'editor' || user.tipo === 'diretor')) { %>
+                        <a href="/galeria/enviar" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>
+                            Enviar Fotos
+                        </a>
+                    <% } %>
+                </div>
+            </div>
+
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <%= error %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <% } %>
+
+            <% if (typeof success !== 'undefined' && success) { %>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <%= success %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <% } %>
+
+            <% if (albums && albums.length > 0) { %>
+                <div class="row">
+                    <% albums.forEach(album => { %>
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card h-100 shadow-sm">
+                                <% if (album.foto_capa) { %>
+                                    <img src="<%= album.foto_capa %>" class="card-img-top" alt="<%= album.titulo %>" style="height: 200px; object-fit: cover;">
+                                <% } else { %>
+                                    <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 200px;">
+                                        <i class="fas fa-images fa-3x text-muted"></i>
+                                    </div>
+                                <% } %>
+                                <div class="card-body">
+                                    <h5 class="card-title"><%= album.titulo %></h5>
+                                    <p class="card-text text-muted">
+                                        <i class="fas fa-calendar-alt me-1"></i>
+                                        <%= new Date(album.data_evento).toLocaleDateString('pt-BR') %>
+                                    </p>
+                                    <% if (album.descricao) { %>
+                                        <p class="card-text"><%= album.descricao.substring(0, 100) %><% if (album.descricao.length > 100) { %>...<% } %></p>
+                                    <% } %>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            <i class="fas fa-images me-1"></i>
+                                            <%= album.total_fotos %> foto<%= album.total_fotos !== 1 ? 's' : '' %>
+                                        </small>
+                                    </p>
+                                </div>
+                                <div class="card-footer bg-transparent">
+                                    <a href="/galeria/album/<%= album.slug %>" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye me-1"></i>
+                                        Ver Fotos
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } else { %>
+                <div class="text-center py-5">
+                    <i class="fas fa-images fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">Nenhum álbum encontrado</h4>
+                    <p class="text-muted">Ainda não há álbuns de fotos publicados.</p>
+                    <% if (typeof user !== 'undefined' && user && (user.tipo === 'reporter' || user.tipo === 'editor' || user.tipo === 'diretor')) { %>
+                        <a href="/galeria/enviar" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>
+                            Criar Primeiro Álbum
+                        </a>
+                    <% } %>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-img-top {
+    transition: transform 0.2s;
+}
+
+.card:hover .card-img-top {
+    transform: scale(1.05);
+}
+</style>

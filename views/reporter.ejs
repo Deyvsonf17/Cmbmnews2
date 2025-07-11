@@ -1,0 +1,327 @@
+<div class="container my-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="text-navy mb-4">
+                <i class="fas fa-pen-nib me-2"></i>
+                Painel do Estudante Repórter
+            </h1>
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h5><i class="fas fa-file-alt me-2"></i>Total de Notícias</h5>
+                            <h2><%= noticias.length %></h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h5><i class="fas fa-check-circle me-2"></i>Publicadas</h5>
+                            <h2><%= noticias.filter(n => n.status === 'publicada').length %></h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>Minhas Notícias</h3>
+                <div class="btn-group">
+                    <a href="/criar-noticia" class="btn btn-navy">
+                        <i class="fas fa-plus me-2"></i>
+                        Nova Notícia
+                    </a>
+                    <a href="/galeria/enviar" class="btn btn-success">
+                        <i class="fas fa-images me-2"></i>
+                        Enviar Álbum de Fotos
+                    </a>
+                    <a href="/homenagens/enviar" class="btn btn-danger">
+                        <i class="fas fa-heart me-2"></i>
+                        Enviar Homenagem
+                    </a>
+                </div>
+            </div>
+
+            <% if (noticias.length === 0) { %>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Você ainda não criou nenhuma notícia. <a href="/criar-noticia">Clique aqui para criar sua primeira notícia</a>.
+                </div>
+            <% } else { %>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Título</th>
+                                <th>Categoria</th>
+                                <th>Status</th>
+                                <th>Data</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% noticias.forEach(noticia => { %>
+                                <tr>
+                                    <td>
+                                        <strong><%= noticia.titulo %></strong>
+                                        <% if (noticia.observacoes && noticia.status === 'recusada') { %>
+                                            <br><small class="text-danger">
+                                                <i class="fas fa-comment me-1"></i>
+                                                Feedback: <%= noticia.observacoes %>
+                                            </small>
+                                        <% } %>
+                                    </td>
+                                    <td><%= noticia.categoria %></td>
+                                    <td>
+                                        <% if (noticia.status === 'rascunho') { %>
+                                            <span class="badge bg-secondary">Rascunho</span>
+                                        <% } else if (noticia.status === 'aguardando_revisao') { %>
+                                            <span class="badge bg-warning">Aguardando Revisão</span>
+                                        <% } else if (noticia.status === 'aprovada') { %>
+                                            <span class="badge bg-info">Aprovada</span>
+                                        <% } else if (noticia.status === 'recusada') { %>
+                                            <span class="badge bg-danger">Recusada</span>
+                                        <% } else if (noticia.status === 'publicada') { %>
+                                            <span class="badge bg-success">Publicada</span>
+                                        <% } %>
+                                    </td>
+                                    <td><%= new Date(noticia.data_criacao).toLocaleDateString('pt-BR') %></td>
+                                    <td>
+                                        <div class="btn-group-sm" role="group">
+                                            <% if (noticia.status === 'publicada') { %>
+                                                <a href="/noticia/<%= noticia.slug %>" class="btn btn-sm btn-outline-primary" target="_blank">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            <% } %>
+
+                                            <% if (noticia.status !== 'publicada') { %>
+                                                <a href="/editar/<%= noticia.id %>" class="btn btn-sm btn-outline-warning">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            <% } %>
+
+                                            <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#confirmModalAluno<%= noticia.id %>">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+
+                                        <!-- Modal de confirmação para aluno -->
+                                        <div class="modal fade" id="confirmModalAluno<%= noticia.id %>" tabindex="-1" aria-labelledby="confirmModalAlunoLabel<%= noticia.id %>" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered">
+                                                <div class="modal-content">
+                                                    <div class="modal-header bg-danger text-white">
+                                                        <h5 class="modal-title" id="confirmModalAlunoLabel<%= noticia.id %>">
+                                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                                            Confirmar Exclusão
+                                                        </h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p class="mb-3">Tem certeza que deseja excluir a notícia?</p>
+                                                        <div class="alert alert-warning">
+                                                            <strong>Título:</strong> <%= noticia.titulo %><br>
+                                                            <strong>Status:</strong> <%= noticia.status %>
+                                                        </div>
+                                                        <p class="text-muted mb-0">
+                                                            <i class="fas fa-info-circle me-1"></i>
+                                                            Esta ação não pode ser desfeita.
+                                                        </p>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                            <i class="fas fa-times me-1"></i>
+                                                            Cancelar
+                                                        </button>
+                                                        <form method="POST" action="/excluir-noticia/<%= noticia.id %>" class="d-inline">
+                                                            <button type="submit" class="btn btn-danger">
+                                                                <i class="fas fa-trash me-1"></i>
+                                                                Excluir Definitivamente
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } %>
+
+            <!-- Seção de Álbuns de Fotos -->
+            <div class="mt-5">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3>Meus Álbuns de Fotos</h3>
+                    <a href="/galeria/enviar" class="btn btn-success">
+                        <i class="fas fa-images me-2"></i>
+                        Enviar Álbum
+                    </a>
+                </div>
+
+                <!-- Estatísticas dos Álbuns -->
+                <div class="row mb-4" id="estatisticas-albums">
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <h5><i class="fas fa-photo-video me-2"></i>Total Álbuns</h5>
+                                <h2 id="total-albums">-</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <h5><i class="fas fa-clock me-2"></i>Aguardando</h5>
+                                <h2 id="albums-aguardando">-</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <h5><i class="fas fa-check me-2"></i>Aprovados</h5>
+                                <h2 id="albums-aprovados">-</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-danger text-white">
+                            <div class="card-body text-center">
+                                <h5><i class="fas fa-times me-2"></i>Reprovados</h5>
+                                <h2 id="albums-reprovados">-</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lista de Álbuns -->
+                <div id="meus-albums">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Carregando...</span>
+                        </div>
+                        <p class="mt-2">Carregando álbuns...</p>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Como funciona:</strong> Envie álbuns de fotos para eventos escolares. Após enviar, suas fotos passarão por aprovação do editor antes de serem publicadas na galeria.
+                </div>
+                
+                <div class="text-center mt-4">
+                    <a href="/galeria" class="btn btn-outline-primary">
+                        <i class="fas fa-eye me-2"></i>
+                        Ver Galeria Pública
+                    </a>
+                </div>
+            </div>
+
+            <script>
+                // Carregar álbuns do usuário
+                async function carregarAlbums() {
+                    try {
+                        const response = await fetch('/api/meus-albums');
+                        const data = await response.json();
+                        
+                        // Atualizar estatísticas
+                        document.getElementById('total-albums').textContent = data.total || 0;
+                        document.getElementById('albums-aguardando').textContent = data.aguardando || 0;
+                        document.getElementById('albums-aprovados').textContent = data.aprovados || 0;
+                        document.getElementById('albums-reprovados').textContent = data.reprovados || 0;
+                        
+                        // Renderizar lista de álbuns
+                        const container = document.getElementById('meus-albums');
+                        
+                        if (data.albums && data.albums.length > 0) {
+                            container.innerHTML = `
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Álbum</th>
+                                                <th>Data Evento</th>
+                                                <th>Fotos</th>
+                                                <th>Status</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${data.albums.map(album => `
+                                                <tr>
+                                                    <td>
+                                                        <strong>${album.titulo}</strong>
+                                                        ${album.descricao ? `<br><small class="text-muted">${album.descricao}</small>` : ''}
+                                                    </td>
+                                                    <td>${new Date(album.data_evento).toLocaleDateString('pt-BR')}</td>
+                                                    <td>
+                                                        <span class="badge bg-secondary">${album.total_fotos} foto(s)</span>
+                                                        <br><small class="text-muted">
+                                                            Aprovadas: ${album.fotos_aprovadas} | 
+                                                            Pendentes: ${album.fotos_pendentes} | 
+                                                            Reprovadas: ${album.fotos_reprovadas}
+                                                        </small>
+                                                    </td>
+                                                    <td>
+                                                        ${getStatusBadge(album)}
+                                                    </td>
+                                                    <td>
+                                                        ${album.fotos_aprovadas > 0 ? 
+                                                            `<a href="/galeria/album/${album.slug}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                                                <i class="fas fa-eye"></i> Ver
+                                                            </a>` : ''
+                                                        }
+                                                    </td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            `;
+                        } else {
+                            container.innerHTML = `
+                                <div class="alert alert-info text-center">
+                                    <i class="fas fa-images fa-3x mb-3 d-block"></i>
+                                    <h5>Nenhum álbum encontrado</h5>
+                                    <p class="mb-3">Você ainda não enviou nenhum álbum de fotos.</p>
+                                    <a href="/galeria/enviar" class="btn btn-success">
+                                        <i class="fas fa-plus me-1"></i>
+                                        Enviar Primeiro Álbum
+                                    </a>
+                                </div>
+                            `;
+                        }
+                    } catch (error) {
+                        console.error('Erro ao carregar álbuns:', error);
+                        document.getElementById('meus-albums').innerHTML = `
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Erro ao carregar álbuns. Tente recarregar a página.
+                            </div>
+                        `;
+                    }
+                }
+
+                function getStatusBadge(album) {
+                    if (album.fotos_reprovadas > 0 && album.fotos_pendentes === 0 && album.fotos_aprovadas === 0) {
+                        return `<span class="badge bg-danger">Reprovado</span>`;
+                    } else if (album.fotos_aprovadas > 0 && album.fotos_pendentes === 0) {
+                        return `<span class="badge bg-success">Aprovado</span>`;
+                    } else if (album.fotos_pendentes > 0) {
+                        return `<span class="badge bg-warning">Aguardando Aprovação</span>`;
+                    } else {
+                        return `<span class="badge bg-secondary">Sem fotos</span>`;
+                    }
+                }
+
+                // Carregar álbuns quando a página carrega
+                document.addEventListener('DOMContentLoaded', carregarAlbums);
+            </script>
+        </div>
+    </div>
+</div>

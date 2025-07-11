@@ -1,0 +1,402 @@
+<!-- Professional Hero Section -->
+<div class="hero-section">
+    <div class="hero-content">
+        <div class="container text-center">
+            <div class="mb-4">
+                <img src="/logo.png" alt="Logo CMBM NEWS" 
+                     style="max-width: 100%; height: auto; width: 180px; opacity: 0.9;"
+                     class="img-fluid">
+            </div>
+            <h1 class="display-4 fw-bold text-white mb-3">
+                Bem-vindos ao CMBM NEWS
+            </h1>
+            <p class="lead mb-4">
+                O portal de notícias oficial do Colégio Municipal Baltazar Moreno
+            </p>
+            <p class="mb-4">
+                Acompanhe todas as novidades, eventos e conquistas da nossa comunidade escolar
+            </p>
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <a href="#latest-news" class="btn btn-primary btn-lg">
+                    <i class="fas fa-newspaper me-2"></i>
+                    Ver Últimas Notícias
+                </a>
+                <a href="/galeria" class="btn btn-outline-light btn-lg">
+                    <i class="fas fa-images me-2"></i>
+                    Galeria de Fotos
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Professional Search Section -->
+<div class="search-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <h3 class="text-center mb-4">
+                    <i class="fas fa-search me-2"></i>
+                    Pesquise por notícias
+                </h3>
+                <form method="GET" action="/" class="row g-3">
+                    <!-- Campo de busca -->
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white">
+                                <i class="fas fa-search text-muted"></i>
+                            </span>
+                            <input type="text" 
+                                   class="form-control" 
+                                   name="busca" 
+                                   value="<%= busca || '' %>" 
+                                   placeholder="Digite palavras-chave, título ou conteúdo...">
+                        </div>
+                    </div>
+                    
+                    <!-- Filtro de categoria -->
+                    <div class="col-md-3">
+                        <select name="categoria" class="form-select">
+                            <option value="">📂 Todas as categorias</option>
+                            <% if (typeof categorias !== 'undefined' && categorias) { %>
+                                <% categorias.forEach(cat => { %>
+                                    <option value="<%= cat %>" <%= (categoria || '') === cat ? 'selected' : '' %>>
+                                        <%= cat %>
+                                    </option>
+                                <% }) %>
+                            <% } %>
+                        </select>
+                    </div>
+                    
+                    <!-- Botões de ação -->
+                    <div class="col-md-3">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary flex-fill">
+                                <i class="fas fa-search me-1"></i>
+                                Pesquisar
+                            </button>
+                            <% if ((busca && busca !== '') || (categoria && categoria !== '')) { %>
+                                <a href="/" class="btn btn-outline-secondary">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            <% } %>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Professional News Grid Layout -->
+<div class="news-grid">
+    <!-- Main Content Area -->
+    <div class="main-content" id="latest-news">
+        <!-- Section Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="text-primary-dark">
+                <i class="fas fa-newspaper me-2"></i>
+                <% if (busca && busca !== '') { %>
+                    Resultados da Pesquisa
+                    <small class="text-muted fs-6 ms-2">para "<%= busca %>"</small>
+                <% } else if (categoria && categoria !== '') { %>
+                    Categoria: <%= categoria %>
+                <% } else { %>
+                    Últimas Notícias
+                <% } %>
+            </h2>
+            <% if (typeof admin !== 'undefined' && admin) { %>
+                <a href="/admin/nova" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>
+                    Nova Notícia
+                </a>
+            <% } %>
+        </div>
+
+        <!-- Professional News Cards -->
+        <% if (noticias && noticias.length > 0) { %>
+            <div class="row">
+                <% noticias.forEach(function(noticia, index) { %>
+                    <div class="col-lg-6 mb-4">
+                        <article class="news-card">
+                            <% if (noticia.imagem_url) { %>
+                                <img src="<%= noticia.imagem_url %>" class="card-img-top" alt="<%= noticia.titulo %>">
+                            <% } else { %>
+                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                    <i class="fas fa-newspaper text-muted" style="font-size: 3rem;"></i>
+                                </div>
+                            <% } %>
+                            
+                            <div class="card-body">
+                                <% if (noticia.categoria) { %>
+                                    <span class="news-category">
+                                        <%= noticia.categoria %>
+                                    </span>
+                                <% } %>
+                                
+                                <h3 class="card-title">
+                                    <% if (noticia.slug) { %>
+                                        <a href="/noticia/<%= noticia.slug %>" class="text-decoration-none text-dark">
+                                            <%= noticia.titulo %>
+                                        </a>
+                                    <% } else { %>
+                                        <a href="/noticia/id/<%= noticia.id %>" class="text-decoration-none text-dark">
+                                            <%= noticia.titulo %>
+                                        </a>
+                                    <% } %>
+                                </h3>
+                                
+                                <p class="card-text">
+                                    <%= noticia.conteudo.substring(0, 200) %>
+                                    <% if (noticia.conteudo.length > 200) { %>...
+                                    <% } %>
+                                </p>
+                                
+                                <div class="news-meta">
+                                    <div>
+                                        <i class="fas fa-calendar me-1"></i>
+                                        <%= new Date(noticia.data_criacao).toLocaleDateString('pt-BR', { 
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric' 
+                                        }) %>
+                                        <% if (noticia.autor_nome) { %>
+                                            <br>
+                                            <i class="fas fa-user me-1"></i>
+                                            <%= noticia.autor_nome %>
+                                            <% if (noticia.autor_tipo === 'aluno' && noticia.autor_serie && noticia.autor_turma) { %>
+                                                <span class="badge bg-primary ms-1"><%= noticia.autor_serie %> <%= noticia.autor_turma %></span>
+                                            <% } %>
+                                        <% } %>
+                                    </div>
+                                    <div>
+                                        <% if (noticia.slug) { %>
+                                            <a href="/noticia/<%= noticia.slug %>" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-arrow-right me-1"></i>
+                                                Ler Matéria
+                                            </a>
+                                        <% } else { %>
+                                            <a href="/noticia/id/<%= noticia.id %>" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-arrow-right me-1"></i>
+                                                Ler Matéria
+                                            </a>
+                                        <% } %>
+                                        
+                                        <% if (typeof admin !== 'undefined' && admin) { %>
+                                            <a href="/admin/editar/<%= noticia.id %>" class="btn btn-outline-warning btn-sm ms-1">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                    
+                    <!-- Ad Space between news (every 4 articles) -->
+                    <% if ((index + 1) % 4 === 0 && index < noticias.length - 1) { %>
+                        <div class="col-12">
+                            <div class="ad-space banner">
+                                <i class="fas fa-ad me-2"></i>
+                                Espaço Publicitário - Banner Intermédio
+                            </div>
+                        </div>
+                    <% } %>
+                <% }); %>
+            </div>
+
+                <!-- Paginação -->
+                <% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
+                    <nav aria-label="Paginação das notícias" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            <!-- Botão Anterior -->
+                            <% if (currentPage > 1) { %>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=<%= currentPage - 1 %><%= categoria ? '&categoria=' + categoria : '' %><%= busca ? '&busca=' + busca : '' %>">
+                                        <i class="fas fa-chevron-left"></i>
+                                        Anterior
+                                    </a>
+                                </li>
+                            <% } else { %>
+                                <li class="page-item disabled">
+                                    <span class="page-link">
+                                        <i class="fas fa-chevron-left"></i>
+                                        Anterior
+                                    </span>
+                                </li>
+                            <% } %>
+
+                            <!-- Números das páginas -->
+                            <% 
+                                let startPage = Math.max(1, currentPage - 2);
+                                let endPage = Math.min(totalPages, currentPage + 2);
+                            %>
+                            
+                            <% if (startPage > 1) { %>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1<%= categoria ? '&categoria=' + categoria : '' %><%= busca ? '&busca=' + busca : '' %>">1</a>
+                                </li>
+                                <% if (startPage > 2) { %>
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                <% } %>
+                            <% } %>
+
+                            <% for (let i = startPage; i <= endPage; i++) { %>
+                                <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                                    <a class="page-link" href="?page=<%= i %><%= categoria ? '&categoria=' + categoria : '' %><%= busca ? '&busca=' + busca : '' %>">
+                                        <%= i %>
+                                    </a>
+                                </li>
+                            <% } %>
+
+                            <% if (endPage < totalPages) { %>
+                                <% if (endPage < totalPages - 1) { %>
+                                    <li class="page-item disabled">
+                                        <span class="page-link">...</span>
+                                    </li>
+                                <% } %>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=<%= totalPages %><%= categoria ? '&categoria=' + categoria : '' %><%= busca ? '&busca=' + busca : '' %>">
+                                        <%= totalPages %>
+                                    </a>
+                                </li>
+                            <% } %>
+
+                            <!-- Botão Próximo -->
+                            <% if (currentPage < totalPages) { %>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=<%= currentPage + 1 %><%= categoria ? '&categoria=' + categoria : '' %><%= busca ? '&busca=' + busca : '' %>">
+                                        Próximo
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                            <% } else { %>
+                                <li class="page-item disabled">
+                                    <span class="page-link">
+                                        Próximo
+                                        <i class="fas fa-chevron-right"></i>
+                                    </span>
+                                </li>
+                            <% } %>
+                        </ul>
+                    </nav>
+
+                    <!-- Informações da paginação -->
+                    <div class="text-center text-muted">
+                        <small>
+                            Mostrando <%= (currentPage - 1) * 5 + 1 %> a <%= Math.min(currentPage * 5, (typeof total !== 'undefined' ? total : noticias.length)) %> 
+                            de <%= typeof total !== 'undefined' ? total : noticias.length %> notícias
+                        </small>
+                    </div>
+                <% } %>
+
+        <% } else { %>
+            <!-- Empty State with Professional Design -->
+            <div class="text-center py-5">
+                <div class="mb-4">
+                    <i class="fas fa-newspaper text-muted" style="font-size: 5rem; opacity: 0.3;"></i>
+                </div>
+                <% if (busca && busca !== '') { %>
+                    <h3 class="text-muted mb-3">Nenhum resultado encontrado</h3>
+                    <p class="text-muted mb-4">
+                        Não encontramos notícias que correspondam aos seus critérios de pesquisa.<br>
+                        Tente buscar com outras palavras-chave ou explore nossas categorias.
+                    </p>
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="/" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left me-1"></i>
+                            Voltar às Notícias
+                        </a>
+                        <a href="/galeria" class="btn btn-outline-secondary">
+                            <i class="fas fa-images me-1"></i>
+                            Ver Galeria
+                        </a>
+                    </div>
+                <% } else { %>
+                    <h3 class="text-muted mb-3">Nenhuma notícia publicada ainda</h3>
+                    <p class="text-muted mb-4">
+                        Estamos preparando conteúdo incrível para você.<br>
+                        Em breve teremos as primeiras notícias da nossa escola.
+                    </p>
+                    <% if (typeof admin !== 'undefined' && admin) { %>
+                        <a href="/admin/nova" class="btn btn-primary btn-lg">
+                            <i class="fas fa-plus me-2"></i>
+                            Criar Primeira Notícia
+                        </a>
+                    <% } else { %>
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="/galeria" class="btn btn-outline-primary">
+                                <i class="fas fa-images me-1"></i>
+                                Explorar Galeria
+                            </a>
+                            <a href="#" onclick="window.location.reload()" class="btn btn-outline-secondary">
+                                <i class="fas fa-refresh me-1"></i>
+                                Atualizar Página
+                            </a>
+                        </div>
+                    <% } %>
+                <% } %>
+            </div>
+        <% } %>
+    </div>
+
+    <!-- Professional Sidebar -->
+    <aside class="sidebar">
+        <!-- Quick Navigation -->
+        <h4>
+            <i class="fas fa-compass me-2"></i>
+            Navegação Rápida
+        </h4>
+        <div class="mb-4">
+            <a href="/galeria" class="btn btn-outline-primary w-100 mb-2">
+                <i class="fas fa-images me-2"></i>
+                Galeria de Fotos
+            </a>
+            <% if (typeof categorias !== 'undefined' && categorias && categorias.length > 0) { %>
+                <div class="dropdown w-100">
+                    <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-folder me-2"></i>
+                        Categorias
+                    </button>
+                    <ul class="dropdown-menu w-100">
+                        <% categorias.forEach(cat => { %>
+                            <li><a class="dropdown-item" href="/?categoria=<%= encodeURIComponent(cat) %>"><%= cat %></a></li>
+                        <% }) %>
+                    </ul>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- Ad Space - Sidebar -->
+        <div class="ad-space sidebar-ad">
+            <i class="fas fa-ad me-2"></i>
+            Publicidade<br>
+            <small>300x250</small>
+        </div>
+
+        <!-- Quick Links -->
+        <h4>
+            <i class="fas fa-link me-2"></i>
+            Links Úteis
+        </h4>
+        <div class="mb-4">
+            <a href="/sobre" class="btn btn-outline-secondary w-100 mb-2">
+                <i class="fas fa-info-circle me-2"></i>
+                Sobre a Escola
+            </a>
+            <a href="/contato" class="btn btn-outline-secondary w-100 mb-2">
+                <i class="fas fa-envelope me-2"></i>
+                Contato
+            </a>
+        </div>
+
+        <!-- Additional Ad Space -->
+        <div class="ad-space sidebar-ad">
+            <i class="fas fa-bullhorn me-2"></i>
+            Anuncie Aqui<br>
+            <small>Espaço Disponível</small>
+        </div>
+    </aside>
+</div>

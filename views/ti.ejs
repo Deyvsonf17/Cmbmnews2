@@ -1,0 +1,319 @@
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="fas fa-cogs text-info me-2"></i>
+                Painel de TI
+            </h2>
+            <div class="d-flex gap-2">
+                <a href="/usuarios" class="btn btn-navy">
+                    <i class="fas fa-users me-1"></i>
+                    Gerenciar Usuários
+                </a>
+                <a href="/dashboard" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>
+                    Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estatísticas do sistema -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-users fs-2 mb-2"></i>
+                <h4><%= usuarios.length %></h4>
+                <p class="mb-0">Total de Usuários</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-newspaper fs-2 mb-2"></i>
+                <h4><%= estatisticas.total_noticias %></h4>
+                <p class="mb-0">Total de Notícias</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-check-circle fs-2 mb-2"></i>
+                <h4><%= estatisticas.publicadas %></h4>
+                <p class="mb-0">Publicadas</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-user-check fs-2 mb-2"></i>
+                <h4><%= usuarios.filter(u => u.ativo === 'true').length %></h4>
+                <p class="mb-0">Usuários Ativos</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Usuários por tipo -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-navy text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    Distribuição de Usuários por Tipo
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        <h3 class="text-danger">
+                            <%= usuarios.filter(u => u.tipo === 'diretor').length %>
+                        </h3>
+                        <p class="mb-0">Diretores</p>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <h3 class="text-warning">
+                            <%= usuarios.filter(u => u.tipo === 'editor').length %>
+                        </h3>
+                        <p class="mb-0">Editores</p>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <h3 class="text-primary">
+                            <%= usuarios.filter(u => u.tipo === 'aluno').length %>
+                        </h3>
+                        <p class="mb-0">Alunos</p>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <h3 class="text-info">
+                            <%= usuarios.filter(u => u.tipo === 'ti').length %>
+                        </h3>
+                        <p class="mb-0">TI</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de usuários -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="fas fa-users me-2"></i>
+                    Usuários do Sistema
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Email</th>
+                                <th>Tipo</th>
+                                <th>Série/Turma</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% usuarios.forEach(usuario => { %>
+                                <tr>
+                                    <td>
+                                        <strong><%= usuario.nome %></strong>
+                                    </td>
+                                    <td><%= usuario.email %></td>
+                                    <td>
+                                        <% 
+                                        let tipoClass = 'secondary';
+                                        let tipoIcon = 'fas fa-user';
+                                        let tipoText = usuario.tipo;
+
+                                        switch(usuario.tipo) {
+                                            case 'diretor':
+                                                tipoClass = 'danger';
+                                                tipoIcon = 'fas fa-crown';
+                                                tipoText = 'Diretor';
+                                                break;
+                                            case 'editor':
+                                                tipoClass = 'warning';
+                                                tipoIcon = 'fas fa-edit';
+                                                tipoText = 'Editor-Chefe';
+                                                break;
+                                            case 'aluno':
+                                                tipoClass = 'primary';
+                                                tipoIcon = 'fas fa-user-graduate';
+                                                tipoText = 'Aluno Repórter';
+                                                break;
+                                            case 'ti':
+                                                tipoClass = 'info';
+                                                tipoIcon = 'fas fa-cogs';
+                                                tipoText = 'TI';
+                                                break;
+                                        }
+                                        %>
+                                        <span class="badge bg-<%= tipoClass %>">
+                                            <i class="<%= tipoIcon %> me-1"></i>
+                                            <%= tipoText %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <% if (usuario.tipo === 'aluno' && usuario.ano && usuario.turma) { %>
+                                            <span class="badge bg-primary">
+                                                <%= usuario.ano %> <%= usuario.turma %>
+                                            </span>
+                                        <% } else if (usuario.tipo === 'aluno') { %>
+                                            <span class="text-muted">Não informado</span>
+                                        <% } else { %>
+                                            <span class="text-muted">—</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <% if (usuario.ativo === 'true') { %>
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check me-1"></i>
+                                                Ativo
+                                            </span>
+                                        <% } else { %>
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times me-1"></i>
+                                                Inativo
+                                            </span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="/usuarios/editar/<%= usuario.id %>" class="btn btn-warning btn-sm">
+                                                <i class="fas fa-edit me-1"></i>
+                                                Editar
+                                            </a>
+                                            <% if (usuario.id !== user.id) { %>
+                                                <form method="POST" action="/usuarios/<%= usuario.id %>/toggle" style="display: inline;">
+                                                    <input type="hidden" name="ativo" value="<%= usuario.ativo === 'true' ? 'false' : 'true' %>">
+                                                    <button 
+                                                        type="submit" 
+                                                        class="btn btn-<%= usuario.ativo === 'true' ? 'danger' : 'success' %> btn-sm"
+                                                        onclick="return confirm('Tem certeza que deseja <%= usuario.ativo === 'true' ? 'desativar' : 'ativar' %> este usuário?')">
+                                                        <i class="fas fa-<%= usuario.ativo === 'true' ? 'ban' : 'check' %> me-1"></i>
+                                                        <%= usuario.ativo === 'true' ? 'Desativar' : 'Ativar' %>
+                                                    </button>
+                                                </form>
+                                            <% } %>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para criar usuário -->
+<div class="modal fade" id="novoUsuarioModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Novo Usuário
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="/usuarios">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="nome" class="form-label">Nome Completo</label>
+                        <input type="text" class="form-control" id="nome" name="nome" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="senha" class="form-label">Senha</label>
+                        <input type="password" class="form-control" id="senha" name="senha" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="tipo" class="form-label">Tipo de Usuário</label>
+                        <select class="form-select" id="tipo" name="tipo" required>
+                            <option value="">Selecione...</option>
+                            <option value="diretor">Diretor</option>
+                            <option value="editor">Editor-Chefe</option>
+                            <option value="aluno">Aluno Repórter</option>
+                            <option value="ti">TI</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-navy">
+                        <i class="fas fa-save me-1"></i>
+                        Criar Usuário
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Função removida - usando confirmação direta no onclick
+
+// Mostrar mensagens de sucesso/erro se existirem
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const error = urlParams.get('error');
+
+    if (success) {
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-success alert-dismissible fade show';
+        alert.innerHTML = `
+            <i class="fas fa-check-circle me-2"></i>
+            ${success}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        const container = document.querySelector('.row').firstElementChild;
+        container.insertBefore(alert, container.firstElementChild);
+
+        // Auto-remover após 5 segundos
+        setTimeout(() => {
+            if (alert.parentNode) {
+                alert.remove();
+            }
+        }, 5000);
+    }
+
+    if (error) {
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-danger alert-dismissible fade show';
+        alert.innerHTML = `
+            <i class="fas fa-exclamation-circle me-2"></i>
+            ${error}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        const container = document.querySelector('.row').firstElementChild;
+        container.insertBefore(alert, container.firstElementChild);
+
+        // Auto-remover após 5 segundos
+        setTimeout(() => {
+            if (alert.parentNode) {
+                alert.remove();
+            }
+        }, 5000);
+    }
+});
+</script>

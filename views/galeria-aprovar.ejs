@@ -1,0 +1,129 @@
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="fas fa-check-circle me-2"></i>
+                Aprovação de Fotos
+            </h1>
+
+            <% if (typeof error !== 'undefined' && error) { %>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <%= error %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <% } %>
+
+            <% if (typeof success !== 'undefined' && success) { %>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <%= success %>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            <% } %>
+
+            <% if (fotosPendentes && fotosPendentes.length > 0) { %>
+                <div class="row">
+                    <% fotosPendentes.forEach(foto => { %>
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card">
+                                <img src="<%= foto.imagem_url %>" class="card-img-top" alt="<%= foto.titulo || 'Foto pendente' %>" 
+                                     style="height: 200px; object-fit: cover;">
+                                <div class="card-body">
+                                    <h6 class="card-title"><%= foto.album_titulo %></h6>
+                                    <% if (foto.titulo) { %>
+                                        <p class="card-text"><strong><%= foto.titulo %></strong></p>
+                                    <% } %>
+                                    <% if (foto.descricao) { %>
+                                        <p class="card-text small"><%= foto.descricao %></p>
+                                    <% } %>
+                                    <p class="card-text">
+                                        <small class="text-muted">
+                                            <i class="fas fa-user me-1"></i>
+                                            <%= foto.autor_nome %>
+                                            <br>
+                                            <i class="fas fa-calendar me-1"></i>
+                                            <%= new Date(foto.data_criacao).toLocaleDateString('pt-BR') %>
+                                            <%= new Date(foto.data_criacao).toLocaleTimeString('pt-BR') %>
+                                        </small>
+                                    </p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <form action="/galeria/aprovar/<%= foto.id %>" method="POST" style="display: inline;">
+                                                <input type="hidden" name="action" value="aprovar">
+                                                <button type="submit" class="btn btn-success btn-sm w-100">
+                                                    <i class="fas fa-check me-1"></i>
+                                                    Aprovar
+                                                </button>
+                                            </form>
+                                        </div>
+                                        <div class="col-6">
+                                            <button type="button" class="btn btn-danger btn-sm w-100" 
+                                                    onclick="showRejectModal(<%= foto.id %>, '<%= foto.titulo || 'Foto' %>')">
+                                                <i class="fas fa-times me-1"></i>
+                                                Reprovar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } else { %>
+                <div class="text-center py-5">
+                    <i class="fas fa-check-circle fa-4x text-muted mb-3"></i>
+                    <h4 class="text-muted">Nenhuma foto pendente</h4>
+                    <p class="text-muted">Todas as fotos foram revisadas ou não há fotos para aprovação.</p>
+                    <a href="/galeria" class="btn btn-primary">
+                        <i class="fas fa-images me-1"></i>
+                        Ver Galeria
+                    </a>
+                </div>
+            <% } %>
+        </div>
+    </div>
+    <a href="/editor" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-2"></i>
+        Voltar
+    </a>
+</div>
+
+<!-- Modal de Reprovação -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rejectModalLabel">Reprovar Foto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="rejectForm" method="POST">
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="reprovar">
+                    <p>Tem certeza que deseja reprovar esta foto?</p>
+                    <div class="mb-3">
+                        <label for="motivo" class="form-label">Motivo da reprovação (opcional)</label>
+                        <textarea class="form-control" id="motivo" name="motivo" rows="3"
+                                  placeholder="Explique o motivo da reprovação..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times me-1"></i>
+                        Reprovar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function showRejectModal(fotoId, fotoTitulo) {
+    document.getElementById('rejectForm').action = '/galeria/aprovar/' + fotoId;
+    document.getElementById('rejectModalLabel').textContent = 'Reprovar: ' + fotoTitulo;
+    const rejectModal = new bootstrap.Modal(document.getElementById('rejectModal'));
+    rejectModal.show();
+}
+</script>

@@ -1,0 +1,397 @@
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="fas fa-users text-info me-2"></i>
+                Gerenciar Usuários
+            </h2>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-navy" data-bs-toggle="modal" data-bs-target="#novoUsuarioModal">
+                    <i class="fas fa-user-plus me-1"></i>
+                    Novo Usuário
+                </button>
+                <a href="/ti" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>
+                    Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<% if (error) { %>
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <%= error %>
+    </div>
+<% } %>
+
+<!-- Lista de usuários -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-navy text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Lista de Usuários (<%= usuarios.length %>)
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nome</th>
+                                <th>Email</th>
+                                <th>Tipo</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% usuarios.forEach(usuario => { %>
+                                <tr class="<%= usuario.ativo === 'false' ? 'table-secondary' : '' %>">
+                                    <td><%= usuario.id %></td>
+                                    <td>
+                                        <strong><%= usuario.nome %></strong>
+                                        <% if (usuario.id === user.id) { %>
+                                            <span class="badge bg-info ms-2">Você</span>
+                                        <% } %>
+                                    </td>
+                                    <td><%= usuario.email %></td>
+                                    <td>
+                                        <% 
+                                        let tipoClass = 'secondary';
+                                        let tipoIcon = 'fas fa-user';
+                                        let tipoText = usuario.tipo;
+
+                                        switch(usuario.tipo) {
+                                            case 'diretor':
+                                                tipoClass = 'danger';
+                                                tipoIcon = 'fas fa-crown';
+                                                tipoText = 'Admin';
+                                                break;
+                                            case 'editor':
+                                                tipoClass = 'warning';
+                                                tipoIcon = 'fas fa-edit';
+                                                tipoText = 'Editor';
+                                                break;
+                                            case 'aluno':
+                                                tipoClass = 'primary';
+                                                tipoIcon = 'fas fa-user-graduate';
+                                                tipoText = 'Aluno';
+                                                break;
+                                            case 'ti':
+                                                tipoClass = 'info';
+                                                tipoIcon = 'fas fa-cogs';
+                                                tipoText = 'TI';
+                                                break;
+                                        }
+                                        %>
+                                        <span class="badge bg-<%= tipoClass %>">
+                                            <i class="<%= tipoIcon %> me-1"></i>
+                                            <%= tipoText %>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <% if (usuario.ativo === 'true') { %>
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check me-1"></i>
+                                                Ativo
+                                            </span>
+                                        <% } else { %>
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times me-1"></i>
+                                                Inativo
+                                            </span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button 
+                                                type="button" 
+                                                class="btn btn-warning btn-sm"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#editarUsuarioModal<%= usuario.id %>">
+                                                <i class="fas fa-edit me-1"></i>
+                                                Editar
+                                            </button>
+
+                                            <% if (usuario.id !== user.id) { %>
+                                                <form method="POST" action="/usuarios/<%= usuario.id %>/toggle" style="display: inline;">
+                                                    <button 
+                                                        type="submit" 
+                                                        class="btn btn-<%= usuario.ativo === 'true' ? 'danger' : 'success' %> btn-sm"
+                                                        onclick="return confirm('Tem certeza que deseja <%= usuario.ativo === 'true' ? 'desativar' : 'ativar' %> este usuário?')">
+                                                        <i class="fas fa-<%= usuario.ativo === 'true' ? 'ban' : 'check' %> me-1"></i>
+                                                        <%= usuario.ativo === 'true' ? 'Desativar' : 'Ativar' %>
+                                                    </button>
+                                                </form>
+
+                                                <% if (user.tipo === 'diretor') { %>
+                                                    <form method="POST" action="/usuarios/<%= usuario.id %>/delete" style="display: inline;">
+                                                        <button 
+                                                            type="submit" 
+                                                            class="btn btn-outline-danger btn-sm"
+                                                            onclick="return confirm('ATENÇÃO: Esta ação é irreversível! Tem certeza que deseja excluir este usuário?')">
+                                                            <i class="fas fa-trash me-1"></i>
+                                                            Excluir
+                                                        </button>
+                                                    </form>
+                                                <% } %>
+                                            <% } %>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para criar usuário -->
+<div class="modal fade" id="novoUsuarioModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Criar Novo Usuário
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="/usuarios">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="nome" class="form-label">Nome Completo *</label>
+                        <input type="text" class="form-control" id="nome" name="nome" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email *</label>
+                        <input type="email" class="form-control" id="email" name="email" required>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>Senha automática:</strong> Uma senha segura será gerada automaticamente e enviada por email.
+                    </div>
+                    <div class="mb-3">
+                        <label for="tipo" class="form-label">Tipo de Usuário *</label>
+                        <select class="form-select" id="tipo" name="tipo" required onchange="toggleAlunoFields(this.value)">
+                            <option value="">Selecione o tipo...</option>
+                            <% if (user && user.tipo === 'diretor') { %>
+                                <option value="diretor">Admin</option>
+                            <% } %>
+                            <option value="editor">Editor</option>
+                            <option value="aluno">Aluno</option>
+                            <option value="ti">TI</option>
+                        </select>
+                    </div>
+
+                     <!-- Campos específicos para Aluno (inicialmente ocultos) -->
+                     <div id="alunoFields" style="display: none;">
+                        <div class="mb-3">
+                            <label for="ano" class="form-label">Série *</label>
+                            <select class="form-select" id="ano" name="ano">
+                                <option value="">Selecione a série...</option>
+                                <option value="6º ano">6º ano</option>
+                                <option value="7º ano">7º ano</option>
+                                <option value="8º ano">8º ano</option>
+                                <option value="9º ano">9º ano</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="turma" class="form-label">Turma *</label>
+                            <select class="form-select" id="turma" name="turma">
+                                <option value="">Selecione a turma...</option>
+                                <option value="A">A</option>
+                                <option value="B">B</option>
+                                <option value="C">C</option>
+                                <option value="D">D</option>
+                                <option value="E">E</option>
+                                <option value="F">F</option>
+                                <option value="G">G</option>
+                                <option value="H">H</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-navy">
+                        <i class="fas fa-save me-1"></i>
+                        Criar Usuário
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modais para editar usuários -->
+<% usuarios.forEach(usuario => { %>
+    <div class="modal fade" id="editarUsuarioModal<%= usuario.id %>" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-user-edit me-2"></i>
+                        Editar Usuário
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST" action="/usuarios/<%= usuario.id %>/edit">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="nome<%= usuario.id %>" class="form-label">Nome Completo *</label>
+                            <input type="text" class="form-control" id="nome<%= usuario.id %>" name="nome" value="<%= usuario.nome %>" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email<%= usuario.id %>" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="email<%= usuario.id %>" name="email" value="<%= usuario.email %>" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="senha<%= usuario.id %>" class="form-label">Nova Senha</label>
+                            <input type="password" class="form-control" id="senha<%= usuario.id %>" name="senha" minlength="6">
+                            <small class="form-text text-muted">Deixe em branco para manter a senha atual</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="tipo<%= usuario.id %>" class="form-label">Tipo de Usuário *</label>
+                            <select class="form-select" id="tipo<%= usuario.id %>" name="tipo" required onchange="toggleAlunoFieldsEdit('<%= usuario.id %>', this.value)">
+                                <% if (user && user.tipo === 'diretor') { %>
+                                    <option value="diretor" <%= usuario.tipo === 'diretor' ? 'selected' : '' %>>Admin</option>
+                                <% } %>
+                                <option value="editor" <%= usuario.tipo === 'editor' ? 'selected' : '' %>>Editor</option>
+                                <option value="aluno" <%= usuario.tipo === 'aluno' ? 'selected' : '' %>>Aluno</option>
+                                <option value="ti" <%= usuario.tipo === 'ti' ? 'selected' : '' %>>TI</option>
+                            </select>
+                        </div>
+                         <!-- Campos específicos para Aluno (inicialmente ocultos) -->
+                         <div id="alunoFieldsEdit<%= usuario.id %>" style="display: <%= usuario.tipo === 'aluno' ? 'block' : 'none' %>;">
+                            <div class="mb-3">
+                                <label for="ano<%= usuario.id %>" class="form-label">Série</label>
+                                <select class="form-select" id="ano<%= usuario.id %>" name="ano">
+                                    <option value="">Selecione a série...</option>
+                                    <option value="6º ano" <%= usuario.ano === '6º ano' ? 'selected' : '' %>>6º ano</option>
+                                    <option value="7º ano" <%= usuario.ano === '7º ano' ? 'selected' : '' %>>7º ano</option>
+                                    <option value="8º ano" <%= usuario.ano === '8º ano' ? 'selected' : '' %>>8º ano</option>
+                                    <option value="9º ano" <%= usuario.ano === '9º ano' ? 'selected' : '' %>>9º ano</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="turma<%= usuario.id %>" class="form-label">Turma</label>
+                                <select class="form-select" id="turma<%= usuario.id %>" name="turma">
+                                    <option value="">Selecione a turma...</option>
+                                    <option value="A" <%= usuario.turma === 'A' ? 'selected' : '' %>>A</option>
+                                    <option value="B" <%= usuario.turma === 'B' ? 'selected' : '' %>>B</option>
+                                    <option value="C" <%= usuario.turma === 'C' ? 'selected' : '' %>>C</option>
+                                    <option value="D" <%= usuario.turma === 'D' ? 'selected' : '' %>>D</option>
+                                    <option value="E" <%= usuario.turma === 'E' ? 'selected' : '' %>>E</option>
+                                    <option value="F" <%= usuario.turma === 'F' ? 'selected' : '' %>>F</option>
+                                    <option value="G" <%= usuario.turma === 'G' ? 'selected' : '' %>>G</option>
+                                    <option value="H" <%= usuario.turma === 'H' ? 'selected' : '' %>>H</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-save me-1"></i>
+                            Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+<% }) %>
+
+<script>
+function toggleUserStatus(userId, currentStatus) {
+    const newStatus = currentStatus === 'true' ? 'false' : 'true';
+    const action = newStatus === 'true' ? 'ativar' : 'desativar';
+
+    if (confirm(`Tem certeza que deseja ${action} este usuário?`)) {
+        // Implementar requisição AJAX aqui
+        fetch(`/usuarios/${userId}/toggle`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ ativo: newStatus })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Erro ao alterar status do usuário');
+            }
+        })
+        .catch(error => {
+            console.error('Erro:', error);
+            alert('Erro ao alterar status do usuário');
+        });
+    }
+}
+
+function toggleAlunoFields(tipo) {
+    const alunoFields = document.getElementById('alunoFields');
+    if (tipo === 'aluno') {
+        alunoFields.style.display = 'block';
+    } else {
+        alunoFields.style.display = 'none';
+    }
+}
+
+function toggleAlunoFieldsEdit(userId, tipo) {
+    const alunoFields = document.getElementById('alunoFieldsEdit' + userId);
+    if (tipo === 'aluno') {
+        alunoFields.style.display = 'block';
+    } else {
+        alunoFields.style.display = 'none';
+    }
+}
+</script>
+</script>
+<script>
+    function editarUsuario(id) {
+      window.location.href = `/usuarios/editar/${id}`;
+    }
+
+    function alternarStatus(id, statusAtual) {
+      const novoStatus = statusAtual === 'true' ? 'false' : 'true';
+      const acao = novoStatus === 'true' ? 'ativar' : 'desativar';
+
+      if (confirm(`Tem certeza que deseja ${acao} este usuário?`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/usuarios/${id}/toggle`;
+
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'ativo';
+        input.value = novoStatus;
+
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+      }
+    }
+
+    function reenviarAtivacao(id) {
+      if (confirm('Tem certeza que deseja reenviar o email de ativação?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/usuarios/${id}/reenviar-ativacao`;
+
+        document.body.appendChild(form);
+        form.submit();
+      }
+    }
+  </script>

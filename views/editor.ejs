@@ -1,0 +1,197 @@
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>
+                <i class="fas fa-edit text-warning me-2"></i>
+                Painel do Editor-Chefe
+            </h2>
+            <div class="d-flex gap-2">
+                <a href="/criar-noticia" class="btn btn-navy">
+                    <i class="fas fa-plus me-1"></i>
+                    Nova Notícia
+                </a>
+                <a href="/galeria/aprovar" class="btn btn-warning">
+                    <i class="fas fa-images me-1"></i>
+                    Aprovar Fotos
+                </a>
+                <a href="/homenagens/aprovar" class="btn btn-danger">
+                    <i class="fas fa-heart-pulse me-1"></i>
+                    Aprovar Homenagens
+                </a>
+                <a href="/dashboard" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>
+                    Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notícias aguardando revisão -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>
+                    Notícias Aguardando Revisão (<%= noticiasParaRevisao.length %>)
+                </h5>
+            </div>
+            <div class="card-body">
+                <% if (noticiasParaRevisao.length === 0) { %>
+                    <div class="text-center py-4 text-muted">
+                        <i class="fas fa-check-circle fs-1 mb-3"></i>
+                        <p>Não há notícias aguardando revisão no momento.</p>
+                    </div>
+                <% } else { %>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Título</th>
+                                    <th>Autor</th>
+                                    <th>Categoria</th>
+                                    <th>Data</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% noticiasParaRevisao.forEach(noticia => { %>
+                                    <tr>
+                                        <td>
+                                            <strong><%= noticia.titulo %></strong>
+                                            <br>
+                                            <small class="text-muted">
+                                                <%= noticia.conteudo.substring(0, 100) %>...
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <%= noticia.autor_nome %>
+                                            <% if (noticia.autor_tipo === 'aluno' && noticia.autor_serie && noticia.autor_turma) { %>
+                                                <br><span class="badge bg-primary"><%= noticia.autor_serie %> <%= noticia.autor_turma %></span>
+                                            <% } %>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary"><%= noticia.categoria %></span>
+                                        </td>
+                                        <td>
+                                            <small><%= new Date(noticia.data_criacao).toLocaleDateString('pt-BR') %></small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="/revisar/<%= noticia.id %>" class="btn btn-warning btn-sm">
+                                                    <i class="fas fa-eye me-1"></i>
+                                                    Revisar
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Todas as notícias -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-navy text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-newspaper me-2"></i>
+                    Todas as Notícias
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Título</th>
+                                <th>Autor</th>
+                                <th>Status</th>
+                                <th>Categoria</th>
+                                <th>Data</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% todasNoticias.forEach(noticia => { %>
+                                <tr>
+                                    <td>
+                                        <strong><%= noticia.titulo %></strong>
+                                        <br>
+                                        <small class="text-muted">
+                                            <%= noticia.conteudo.substring(0, 80) %>...
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <%= noticia.autor_nome %>
+                                        <% if (noticia.autor_tipo === 'aluno' && noticia.autor_serie && noticia.autor_turma) { %>
+                                            <br><span class="badge bg-primary"><%= noticia.autor_serie %> <%= noticia.autor_turma %></span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <% 
+                                        let statusClass = 'secondary';
+                                        let statusText = noticia.status;
+
+                                        switch(noticia.status) {
+                                            case 'publicada':
+                                                statusClass = 'success';
+                                                statusText = 'Publicada';
+                                                break;
+                                            case 'aguardando_revisao':
+                                                statusClass = 'warning';
+                                                statusText = 'Aguardando Revisão';
+                                                break;
+                                            case 'aprovada':
+                                                statusClass = 'info';
+                                                statusText = 'Aprovada';
+                                                break;
+                                            case 'recusada':
+                                                statusClass = 'danger';
+                                                statusText = 'Recusada';
+                                                break;
+                                            case 'rascunho':
+                                                statusClass = 'secondary';
+                                                statusText = 'Rascunho';
+                                                break;
+                                        }
+                                        %>
+                                        <span class="badge bg-<%= statusClass %>"><%= statusText %></span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary"><%= noticia.categoria %></span>
+                                    </td>
+                                    <td>
+                                        <small><%= new Date(noticia.data_criacao).toLocaleDateString('pt-BR') %></small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <% if (noticia.status === 'aguardando_revisao') { %>
+                                                <a href="/revisar/<%= noticia.id %>" class="btn btn-warning btn-sm">
+                                                    <i class="fas fa-eye me-1"></i>
+                                                    Revisar
+                                                </a>
+                                            <% } else if (noticia.status === 'publicada') { %>
+                                                <a href="/noticia/<%= noticia.slug %>" target="_blank" class="btn btn-success btn-sm">
+                                                    <i class="fas fa-external-link-alt me-1"></i>
+                                                    Ver
+                                                </a>
+                                            <% } %>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

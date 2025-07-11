@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title><%= typeof title !== 'undefined' && title ? title + ' - CMBM NEWS' : 'CMBM NEWS - Portal de Notícias' %></title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Portal de notícias do Colégio Municipal Baltazar Moreno - Fique por dentro de todas as novidades da nossa escola">
+    <meta name="keywords" content="CMBM, Colégio Baltazar Moreno, notícias escolares, educação, Moreno PE">
+    <meta name="author" content="CMBM NEWS">
+    <meta property="og:title" content="<%= typeof title !== 'undefined' && title ? title + ' - CMBM NEWS' : 'CMBM NEWS - Portal de Notícias' %>">
+    <meta property="og:description" content="Portal de notícias do Colégio Municipal Baltazar Moreno">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="CMBM NEWS">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts for Professional Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <!-- Breaking News Banner (opcional - pode ser ativado quando houver notícias urgentes) -->
+    <% if (typeof breakingNews !== 'undefined' && breakingNews) { %>
+    <div class="breaking-news">
+        <div class="container">
+            <i class="fas fa-bolt"></i>
+            <span>ÚLTIMA HORA:</span>
+            <%= breakingNews %>
+        </div>
+    </div>
+    <% } %>
+
+    <!-- Professional News Header -->
+    <header class="news-header">
+        <!-- News Masthead -->
+        <div class="news-masthead">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-lg-12">
+                        <div class="news-date text-center">
+                            <i class="fas fa-calendar-alt me-2"></i>
+                            <%= new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Professional Navigation -->
+        <nav class="navbar navbar-expand-lg">
+            <div class="container">
+                <!-- Mobile Brand (hidden on larger screens) -->
+                <a class="navbar-brand d-lg-none" href="/">
+                    <img src="/logo.png" alt="CMBM News" style="height: 24px; width: auto;">
+                    CMBM NEWS
+                </a>
+
+                <!-- Mobile Toggle Button -->
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Navigation Menu -->
+                <div class="collapse navbar-collapse" id="mainNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">
+                                <i class="fas fa-newspaper me-1"></i>
+                                Notícias
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/galeria">
+                                <i class="fas fa-images me-1"></i>
+                                Galeria
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/homenagens">
+                                <i class="fas fa-heart me-1"></i>
+                                Homenagens
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/sobre">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Sobre
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/contato">
+                                <i class="fas fa-envelope me-1"></i>
+                                Contato
+                            </a>
+                        </li>
+
+                        <!-- User options when logged in -->
+                        <% if (typeof user !== 'undefined' && user) { %>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/">
+                                    <i class="fas fa-home me-1"></i>
+                                    Página Inicial
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/dashboard">
+                                    <i class="fas fa-tachometer-alt me-1"></i>
+                                    Painel Administrador
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/perfil">
+                                    <i class="fas fa-user me-1"></i>
+                                    Perfil
+                                </a>
+                            </li>
+                            <% if (user.tipo === 'editor' || user.tipo === 'diretor') { %>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/galeria/aprovar">
+                                        <i class="fas fa-check-circle me-1"></i>
+                                        Aprovar Fotos
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="/homenagens/aprovar">
+                                        <i class="fas fa-heart-pulse me-1"></i>
+                                        Aprovar Homenagens
+                                    </a>
+                                </li>
+                            <% } %>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/logout">
+                                    <i class="fas fa-sign-out-alt me-1"></i>
+                                    Sair
+                                </a>
+                            </li>
+                        <% } %>
+                    </ul>
+
+                    <!-- User info display (right side) -->
+                    <ul class="navbar-nav">
+                        <% if (typeof user !== 'undefined' && user) { %>
+                            <li class="nav-item">
+                                <span class="navbar-text text-white d-flex align-items-center">
+                                    <% if (user.foto_perfil) { %>
+                                        <img src="<%= user.foto_perfil %>" alt="Foto de perfil" class="user-profile-pic me-2" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,0.3);">
+                                    <% } else { %>
+                                        <i class="fas fa-user-circle me-2" style="font-size: 24px;"></i>
+                                    <% } %>
+                                    <%= user.nome %>
+                                </span>
+                            </li>
+                        <% } %>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content with Professional Layout -->
+    <main class="news-container">
+        <!-- Ad Space - Top Banner (ready for future advertising) -->
+        <div class="ad-space banner d-none d-md-block">
+            <i class="fas fa-ad me-2"></i>
+            Espaço Publicitário - Banner Superior
+        </div>
+
+        <%- body %>
+    </main>
+
+    <!-- Professional Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <!-- School Information -->
+                <div class="footer-section">
+                    <h5>
+                        <i class="fas fa-school me-2"></i>
+                        Colégio Municipal Baltazar Moreno
+                    </h5>
+                    <p>
+                        <i class="fas fa-map-marker-alt me-2"></i>
+                        Av. Dr. Sofronio Portela, Centro, 4309<br>
+                        Moreno - PE, Brasil
+                    </p>
+                    <p>
+                        <i class="fas fa-envelope"></i>
+                        email da secretaria: SecretariaBaltazarmoreno@gmail.com
+                    </p>
+                    <div class="social-links">
+                        <a href="https://www.instagram.com/cmbaltazarmoreno/" target="_blank" rel="noopener" title="Instagram da escola">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Developer Information -->
+                <div class="footer-section">
+                    <h5>
+                        <i class="fas fa-code me-2"></i>
+                        Site Desenvolvido por
+                    </h5>
+                    <p>
+                        <strong>Deyvson Felipe</strong><br>
+                        Desenvolvedor Web
+                    </p>
+                    <h5>Rede Social</h5>
+                    <div class="social-links">
+                        <a href="https://www.instagram.com/deyvsonf.lima?igsh=cTI1cnh0dzdpc2lz" target="_blank" rel="noopener" title="Instagram do desenvolvedor">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="https://www.facebook.com/share/1Ave8zcYF3/" target="_blank" rel="noopener" title="Facebook do desenvolvedor">
+                            <i class="fab fa-facebook"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Bottom -->
+            <div class="footer-bottom">
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <div>
+                        <p class="mb-0">
+                            <%= new Date().getFullYear() %> CMBM NEWS - Portal de Notícias do Colégio Municipal Baltazar Moreno
+                        </p>
+                        <p class="mb-0">
+                            <i class="fas fa-copyright me-1"></i>Todos os direitos reservados
+                        </p>
+                    </div>
+                    <!-- Discrete Restricted Area Access -->
+                    <% if (typeof user === 'undefined' || !user) { %>
+                    <div class="text-end">
+                        <a href="/login" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-lock me-1"></i>
+                            Área Restrita
+                        </a>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom JS for Professional Features -->
+    <script>
+        // Professional News Portal Features
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile navigation improvements
+            const navbar = document.querySelector('.navbar-collapse');
+            const navLinks = document.querySelectorAll('.nav-link:not(.dropdown-toggle)');
+
+            if (navbar && navLinks.length > 0) {
+                navLinks.forEach(link => {
+                    link.addEventListener('click', function() {
+                        if (window.innerWidth < 992) {
+                            try {
+                                const bsCollapse = new bootstrap.Collapse(navbar, {
+                                    hide: true
+                                });
+                            } catch (error) {
+                                // Fallback para fechar o menu manualmente
+                                navbar.classList.remove('show');
+                            }
+                        }
+                    });
+                });
+            }
+
+
+
+            // Professional loading animation for images
+            const images = document.querySelectorAll('img');
+            images.forEach(img => {
+                if (!img.complete) {
+                    img.addEventListener('load', function() {
+                        this.style.opacity = '1';
+                        this.style.transition = 'opacity 0.3s ease';
+                    });
+                }
+            });
+
+            // Add reading time estimate to news articles
+            const newsContent = document.querySelector('.news-content');
+            if (newsContent) {
+                try {
+                    const text = newsContent.textContent || newsContent.innerText;
+                    if (text && text.trim().length > 0) {
+                        const wordsPerMinute = 200;
+                        const wordCount = text.trim().split(/\s+/).length;
+                        const readTime = Math.ceil(wordCount / wordsPerMinute);
+
+                        const readTimeElement = document.createElement('div');
+                        readTimeElement.className = 'reading-time text-muted mb-3';
+                        readTimeElement.innerHTML = `<i class="fas fa-clock me-1"></i> Tempo de leitura: ${readTime} min`;
+
+                        if (newsContent.parentNode) {
+                            newsContent.parentNode.insertBefore(readTimeElement, newsContent);
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Erro ao calcular tempo de leitura:', error);
+                }
+            }
+
+            // Smooth scrolling for valid anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    const href = this.getAttribute('href');
+
+                    // Validar se é um seletor válido
+                    if (href && href.length > 1 && href !== '#') {
+                        try {
+                            // Verificar se o seletor é válido testando com querySelector
+                            const target = document.querySelector(href);
+                            if (target) {
+                                e.preventDefault();
+                                target.scrollIntoView({
+                                    behavior: 'smooth',
+                                    block: 'start'
+                                });
+                            }
+                        } catch (error) {
+                            // Seletor inválido, não faz nada
+                            console.warn('Seletor CSS inválido:', href);
+                        }
+                    }
+                });
+            });
+        });
+
+        // Função para melhorar a responsividade
+        window.addEventListener('resize', function() {
+            // Fechar menu mobile ao redimensionar se necessário
+            const navbar = document.querySelector('.navbar-collapse');
+            if (navbar && navbar.classList.contains('show') && window.innerWidth >= 992) {
+                navbar.classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

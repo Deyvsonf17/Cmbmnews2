@@ -1,0 +1,154 @@
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0">
+                        <i class="fas fa-plus me-2"></i>
+                        Enviar Fotos para Galeria
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <% if (typeof error !== 'undefined' && error) { %>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <%= error %>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    <% } %>
+
+                    <% if (typeof success !== 'undefined' && success) { %>
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <%= success %>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    <% } %>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Nova funcionalidade:</strong> Agora você pode enviar mais de 10 fotos! Se enviar mais de 10, 
+                        o sistema criará álbuns automáticos (ex: "Feira de Ciências", "Feira de Ciências - Parte 2", etc.)
+                    </div>
+
+                    <form action="/galeria/enviar" method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="titulo" class="form-label">Título do Evento *</label>
+                            <input type="text" class="form-control" id="titulo" name="titulo" required
+                                   placeholder="Ex: Feira de Ciências 2025">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="data_evento" class="form-label">Data do Evento *</label>
+                            <input type="date" class="form-control" id="data_evento" name="data_evento" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="descricao" class="form-label">Descrição do Evento</label>
+                            <textarea class="form-control" id="descricao" name="descricao" rows="3"
+                                      placeholder="Descreva brevemente o evento..."></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="fotos" class="form-label">Fotos *</label>
+                            <input type="file" class="form-control" id="fotos" name="fotos" multiple accept="image/*">
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Máximo 5MB por foto. Formatos aceitos: JPG, PNG, WEBP<br>
+                                <i class="fas fa-exclamation-triangle me-1 text-warning"></i>
+                                <strong>Limite máximo: 50 fotos por envio</strong><br>
+                                <i class="fas fa-lightbulb me-1"></i>
+                                Se enviar mais de 10 fotos, serão criados álbuns automáticos (Ex: "Título - Parte 2")
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="url_alternativa" class="form-label">ou URLs das Fotos</label>
+                            <textarea class="form-control" id="url_alternativa" name="url_alternativa" rows="4"
+                                      placeholder="Cole as URLs das fotos, uma por linha..."></textarea>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Você pode usar upload de arquivos OU URLs, não ambos ao mesmo tempo
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-1"></i>
+                                Enviar para Aprovação
+                            </button>
+                            <a href="/reporter" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>
+                                Voltar ao Painel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Prevenir uso simultâneo de upload e URL
+document.getElementById('fotos').addEventListener('change', function() {
+    if (this.files.length > 0) {
+        // Verificar limite de 50 fotos
+        if (this.files.length > 50) {
+            alert('Máximo de 50 fotos por envio. Você selecionou ' + this.files.length + ' fotos.');
+            this.value = '';
+            return;
+        }
+        
+        document.getElementById('url_alternativa').disabled = true;
+        document.getElementById('url_alternativa').value = '';
+        
+        // Mostrar quantidade de fotos selecionadas
+        const info = document.createElement('div');
+        info.className = 'alert alert-info mt-2';
+        info.innerHTML = `<i class="fas fa-images me-1"></i>${this.files.length} foto(s) selecionada(s)`;
+        
+        // Remover info anterior se existir
+        const existingInfo = this.parentNode.querySelector('.alert-info');
+        if (existingInfo) existingInfo.remove();
+        
+        // Adicionar nova info
+        this.parentNode.appendChild(info);
+    } else {
+        document.getElementById('url_alternativa').disabled = false;
+        
+        // Remover info de fotos selecionadas
+        const existingInfo = this.parentNode.querySelector('.alert-info');
+        if (existingInfo) existingInfo.remove();
+    }
+});
+
+document.getElementById('url_alternativa').addEventListener('input', function() {
+    if (this.value.trim() !== '') {
+        // Verificar limite de 50 URLs
+        const urls = this.value.split('\n').filter(url => url.trim());
+        if (urls.length > 50) {
+            alert('Máximo de 50 URLs por envio. Você inseriu ' + urls.length + ' URLs.');
+            return;
+        }
+        
+        document.getElementById('fotos').disabled = true;
+        
+        // Mostrar quantidade de URLs
+        const info = document.createElement('div');
+        info.className = 'alert alert-info mt-2';
+        info.innerHTML = `<i class="fas fa-link me-1"></i>${urls.length} URL(s) inserida(s)`;
+        
+        // Remover info anterior se existir
+        const existingInfo = this.parentNode.querySelector('.alert-info');
+        if (existingInfo) existingInfo.remove();
+        
+        // Adicionar nova info
+        this.parentNode.appendChild(info);
+    } else {
+        document.getElementById('fotos').disabled = false;
+        
+        // Remover info de URLs
+        const existingInfo = this.parentNode.querySelector('.alert-info');
+        if (existingInfo) existingInfo.remove();
+    }
+});
+</script>

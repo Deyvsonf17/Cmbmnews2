@@ -1,0 +1,222 @@
+<div class="row">
+    <div class="col-12">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-navy">
+                <i class="fas fa-edit me-2"></i>
+                Editar Notícia
+            </h1>
+            <a href="/dashboard" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>
+                Voltar ao Painel
+            </a>
+        </div>
+
+        <!-- Formulário -->
+        <div class="card">
+            <div class="card-body">
+                <% if (typeof error !== 'undefined' && error) { %>
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <%= error %>
+                    </div>
+                <% } %>
+
+                <!-- Exibir observações do editor se houver -->
+                <% if (noticia && noticia.observacoes && noticia.status === 'recusada') { %>
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-comment me-2"></i>Feedback do Editor:</h6>
+                        <p class="mb-0"><%= noticia.observacoes %></p>
+                    </div>
+                <% } %>
+
+                <form method="POST" action="/editar/<%= noticia.id %>">
+                    <div class="mb-3">
+                        <label for="titulo" class="form-label">
+                            <i class="fas fa-heading me-1"></i>
+                            Título da Notícia *
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="titulo" 
+                               name="titulo" 
+                               value="<%= noticia.titulo %>"
+                               placeholder="Digite o título da notícia"
+                               required
+                               maxlength="200">
+                        <div class="form-text">Máximo 200 caracteres</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="categoria" class="form-label">
+                            <i class="fas fa-tag me-1"></i>
+                            Categoria *
+                        </label>
+                        <select class="form-select" id="categoria" name="categoria" required>
+                            <option value="">Selecione uma categoria</option>
+                            <% if (typeof categorias !== 'undefined' && categorias && categorias.length > 0) { %>
+                                <% categorias.forEach(cat => { %>
+                                    <option value="<%= cat %>" <%= (noticia.categoria === cat) ? 'selected' : '' %>>
+                                        <%= cat %>
+                                    </option>
+                                <% }) %>
+                            <% } %>
+                            <option value="Geral" <%= (noticia.categoria === 'Geral') ? 'selected' : '' %>>Geral</option>
+                            <option value="Eventos" <%= (noticia.categoria === 'Eventos') ? 'selected' : '' %>>Eventos</option>
+                            <option value="Educação" <%= (noticia.categoria === 'Educação') ? 'selected' : '' %>>Educação</option>
+                            <option value="Esportes" <%= (noticia.categoria === 'Esportes') ? 'selected' : '' %>>Esportes</option>
+                            <option value="Cultura" <%= (noticia.categoria === 'Cultura') ? 'selected' : '' %>>Cultura</option>
+                            <option value="Avisos" <%= (noticia.categoria === 'Avisos') ? 'selected' : '' %>>Avisos</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="imagem_url" class="form-label">
+                            <i class="fas fa-image me-1"></i>
+                            URL da Imagem (opcional)
+                        </label>
+                        <input type="url" 
+                               class="form-control" 
+                               id="imagem_url" 
+                               name="imagem_url" 
+                               value="<%= noticia.imagem_url || '' %>"
+                               placeholder="https://exemplo.com/imagem.jpg">
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="conteudo" class="form-label">
+                            <i class="fas fa-align-left me-1"></i>
+                            Conteúdo da Notícia *
+                        </label>
+                        <textarea class="form-control" 
+                                  id="conteudo" 
+                                  name="conteudo" 
+                                  rows="12" 
+                                  placeholder="Escreva o conteúdo completo da notícia aqui..."
+                                  required><%= noticia.conteudo %></textarea>
+                    </div>
+
+                    <!-- Preview da imagem -->
+                    <div id="imagePreview" class="mb-3" style="<%= noticia.imagem_url ? 'display: block;' : 'display: none;' %>">
+                        <label class="form-label">Preview da Imagem:</label>
+                        <div class="border rounded p-2">
+                            <img id="previewImg" 
+                                 src="<%= noticia.imagem_url || '' %>" 
+                                 alt="Preview" 
+                                 class="img-fluid rounded" 
+                                 style="max-height: 200px;">
+                        </div>
+                    </div>
+
+                    <!-- Botões de ação -->
+                    <div class="d-flex gap-2 flex-wrap">
+                        <% if (user.tipo === 'aluno') { %>
+                            <button type="submit" name="acao" value="salvar" class="btn btn-warning">
+                                <i class="fas fa-paper-plane me-1"></i>
+                                Salvar e Reenviar para Revisão
+                            </button>
+                        <% } else if (['editor', 'diretor'].includes(user.tipo)) { %>
+                            <button type="submit" name="acao" value="salvar" class="btn btn-secondary">
+                                <i class="fas fa-save me-1"></i>
+                                Salvar Alterações
+                            </button>
+                            <button type="submit" name="acao" value="publicar" class="btn btn-success">
+                                <i class="fas fa-eye me-1"></i>
+                                Publicar
+                            </button>
+                        <% } %>
+
+                        <% if (user.tipo === 'aluno' && noticia.autor_id === user.id) { %>
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="fas fa-trash me-1"></i>
+                                Excluir
+                            </button>
+                        <% } %>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal de confirmação de exclusão -->
+        <% if (user.tipo === 'aluno' && noticia.autor_id === user.id) { %>
+            <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="deleteModalLabel">
+                                <i class="fas fa-exclamation-triangle me-2 text-danger"></i>
+                                Confirmar Exclusão
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="mb-3">Tem certeza que deseja excluir esta notícia?</p>
+                            <div class="alert alert-warning">
+                                <strong>Título:</strong> <%= noticia.titulo %>
+                            </div>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-warning me-1"></i>
+                                Esta ação não pode ser desfeita.
+                            </p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="fas fa-times me-1"></i>
+                                Cancelar
+                            </button>
+                            <form method="POST" action="/excluir-noticia/<%= noticia.id %>" class="d-inline">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-trash me-1"></i>
+                                    Confirmar Exclusão
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<script>
+    // Preview da imagem em tempo real
+    document.getElementById('imagem_url').addEventListener('input', function() {
+        const url = this.value;
+        const preview = document.getElementById('imagePreview');
+        const img = document.getElementById('previewImg');
+
+        if (url) {
+            img.src = url;
+            preview.style.display = 'block';
+
+            img.onerror = function() {
+                preview.style.display = 'none';
+            };
+        } else {
+            preview.style.display = 'none';
+        }
+    });
+
+    // Contador de caracteres para o título
+    document.getElementById('titulo').addEventListener('input', function() {
+        const maxLength = 200;
+        const currentLength = this.value.length;
+        const remaining = maxLength - currentLength;
+
+        const helpText = this.nextElementSibling;
+        helpText.textContent = `${remaining} caracteres restantes`;
+
+        if (remaining < 20) {
+            helpText.classList.add('text-warning');
+        } else {
+            helpText.classList.remove('text-warning');
+        }
+
+        if (remaining < 0) {
+            helpText.classList.add('text-danger');
+            helpText.classList.remove('text-warning');
+        } else {
+            helpText.classList.remove('text-danger');
+        }
+    });
+</script>

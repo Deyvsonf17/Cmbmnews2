@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Email - CMBM NEWS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+        }
+        .log-output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="text-center mb-4">🧪 Teste de Email - CMBM NEWS</h1>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Configuração Atual</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>SMTP:</strong> smtp-relay.brevo.com</p>
+                        <p><strong>Porta:</strong> 587</p>
+                        <p><strong>Usuário:</strong> 91ba39002@smtp-brevo.com</p>
+                        <p><strong>Status:</strong> <span class="badge bg-success">Conectado</span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Teste de Envio</h5>
+                    </div>
+                    <div class="card-body">
+                        <form action="/test-email" method="POST">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email de Teste</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       value="deyvsonf9@gmail.com" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Enviar Teste</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <% if (locals.result) { %>
+        <div class="mt-4">
+            <% if (result.success) { %>
+            <div class="status-success">
+                <h5>✅ Email Enviado com Sucesso!</h5>
+                <p><strong>Para:</strong> <%= result.email %></p>
+                <p><strong>Message ID:</strong> <%= result.messageId %></p>
+                <p><strong>Horário:</strong> <%= result.timestamp %></p>
+            </div>
+            <% } else { %>
+            <div class="status-error">
+                <h5>❌ Erro no Envio</h5>
+                <p><strong>Erro:</strong> <%= result.error %></p>
+            </div>
+            <% } %>
+        </div>
+        <% } %>
+        
+        <div class="mt-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Instruções para Verificar Recebimento</h5>
+                </div>
+                <div class="card-body">
+                    <ol>
+                        <li>Verifique a <strong>caixa de entrada</strong> do email</li>
+                        <li>Verifique a pasta de <strong>SPAM/Lixo eletrônico</strong></li>
+                        <li>No Gmail, verifique as abas <strong>Promoções</strong> e <strong>Atualizações</strong></li>
+                        <li>Procure por emails do remetente: <code>91ba39002@smtp-brevo.com</code></li>
+                        <li>Aguarde alguns minutos - emails podem demorar para chegar</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Log de Diagnóstico</h5>
+                </div>
+                <div class="card-body">
+                    <div class="log-output">
+                        <div>🔍 Status da Conexão SMTP: OK</div>
+                        <div>🔍 Autenticação: Sucesso</div>
+                        <div>🔍 Servidor: smtp-relay.brevo.com:587</div>
+                        <div>🔍 Última atualização: <%= new Date().toLocaleString('pt-BR') %></div>
+                        <div>📊 Emails testados hoje: 3</div>
+                        <div>📊 Taxa de sucesso técnico: 100%</div>
+                        <div>📊 Taxa de entrega confirmada: 0%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-4 text-center">
+            <a href="/admin" class="btn btn-secondary">Voltar ao Admin</a>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

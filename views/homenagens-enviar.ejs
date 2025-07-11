@@ -1,0 +1,340 @@
+<%- contentFor('body') %>
+
+<div class="container my-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <!-- Header da página -->
+      <div class="page-header text-center mb-5">
+        <h1 class="display-4">
+          <i class="fas fa-heart text-danger me-3"></i>
+          Enviar Homenagem
+        </h1>
+        <p class="lead">
+          Homenageie alguém especial que marcou a história do nosso colégio
+        </p>
+      </div>
+
+      <!-- Mensagens de erro/sucesso -->
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          <%= error %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <% } %>
+
+      <% if (typeof success !== 'undefined' && success) { %>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+          <i class="fas fa-check-circle me-2"></i>
+          <%= success %>
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      <% } %>
+
+      <!-- Formulário -->
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-primary text-white">
+          <h3 class="mb-0">
+            <i class="fas fa-edit me-2"></i>
+            Formulário de Homenagem
+          </h3>
+        </div>
+        
+        <div class="card-body">
+          <form action="/homenagens/enviar" method="POST" enctype="multipart/form-data" id="homenagemForm">
+            
+            <!-- Informações básicas -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <h5 class="border-bottom pb-2 mb-3">
+                  <i class="fas fa-user me-2"></i>
+                  Informações do Homenageado
+                </h5>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="nome" class="form-label">
+                    <i class="fas fa-user me-1"></i>
+                    Nome Completo *
+                  </label>
+                  <input type="text" class="form-control" id="nome" name="nome" required maxlength="100">
+                  <div class="form-text">Nome da pessoa a ser homenageada</div>
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="relacao" class="form-label">
+                    <i class="fas fa-graduation-cap me-1"></i>
+                    Relação com o Colégio *
+                  </label>
+                  <input type="text" class="form-control" id="relacao" name="relacao" required maxlength="100" 
+                         placeholder="Ex: Professor, Aluno, Funcionário, Diretor...">
+                  <div class="form-text">Como a pessoa se relaciona com o colégio</div>
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="periodo" class="form-label">
+                    <i class="fas fa-calendar me-1"></i>
+                    Período de Atuação
+                  </label>
+                  <input type="text" class="form-control" id="periodo" name="periodo" maxlength="50" 
+                         placeholder="Ex: 2010-2020, 1995-2005...">
+                  <div class="form-text">Período em que atuou no colégio (opcional)</div>
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="frase" class="form-label">
+                    <i class="fas fa-quote-left me-1"></i>
+                    Frase de Destaque
+                  </label>
+                  <input type="text" class="form-control" id="frase" name="frase" maxlength="200" 
+                         placeholder="Uma frase marcante da pessoa...">
+                  <div class="form-text">Frase marcante ou lema da pessoa (opcional)</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Foto principal -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <h5 class="border-bottom pb-2 mb-3">
+                  <i class="fas fa-camera me-2"></i>
+                  Foto Principal *
+                </h5>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="foto_principal" class="form-label">
+                    <i class="fas fa-upload me-1"></i>
+                    Upload da Foto
+                  </label>
+                  <input type="file" class="form-control" id="foto_principal" name="foto_principal" 
+                         accept="image/jpeg,image/png,image/webp">
+                  <div class="form-text">Formatos: JPG, PNG, WEBP. Máximo: 5MB</div>
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="foto_principal_url" class="form-label">
+                    <i class="fas fa-link me-1"></i>
+                    Ou URL da Foto
+                  </label>
+                  <input type="url" class="form-control" id="foto_principal_url" name="foto_principal_url" 
+                         placeholder="https://exemplo.com/foto.jpg">
+                  <div class="form-text">Link direto para a imagem</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Texto da homenagem -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <h5 class="border-bottom pb-2 mb-3">
+                  <i class="fas fa-file-text me-2"></i>
+                  Texto da Homenagem *
+                </h5>
+                
+                <div class="mb-3">
+                  <label for="texto" class="form-label">
+                    <i class="fas fa-pencil-alt me-1"></i>
+                    Escreva sua homenagem
+                  </label>
+                  <textarea class="form-control" id="texto" name="texto" rows="8" required maxlength="2000" 
+                            placeholder="Conte a história da pessoa, suas contribuições para o colégio, momentos marcantes..."></textarea>
+                  <div class="form-text">
+                    <span id="textoCount">0</span>/2000 caracteres
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Galeria de fotos -->
+            <div class="row mb-4">
+              <div class="col-12">
+                <h5 class="border-bottom pb-2 mb-3">
+                  <i class="fas fa-images me-2"></i>
+                  Galeria de Fotos (máximo 5)
+                </h5>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="galeria_fotos" class="form-label">
+                    <i class="fas fa-upload me-1"></i>
+                    Upload de Fotos
+                  </label>
+                  <input type="file" class="form-control" id="galeria_fotos" name="galeria_fotos" 
+                         accept="image/jpeg,image/png,image/webp" multiple>
+                  <div class="form-text">Máximo 5 fotos. Formatos: JPG, PNG, WEBP</div>
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="mb-3">
+                  <label for="galeria_urls" class="form-label">
+                    <i class="fas fa-link me-1"></i>
+                    Ou URLs das Fotos
+                  </label>
+                  <textarea class="form-control" id="galeria_urls" name="galeria_urls" rows="4" 
+                            placeholder="https://exemplo.com/foto1.jpg&#10;https://exemplo.com/foto2.jpg&#10;(uma URL por linha)"></textarea>
+                  <div class="form-text">Uma URL por linha, máximo 5</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Botões -->
+            <div class="row">
+              <div class="col-12">
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                  <a href="/homenagens" class="btn btn-secondary me-md-2">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Voltar
+                  </a>
+                  <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <i class="fas fa-paper-plane me-2"></i>
+                    Enviar Homenagem
+                  </button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Informações importantes -->
+      <div class="alert alert-info mt-4" role="alert">
+        <h6 class="alert-heading">
+          <i class="fas fa-info-circle me-2"></i>
+          Informações Importantes
+        </h6>
+        <ul class="mb-0">
+          <li><strong>Limite semanal:</strong> Você pode enviar apenas 1 homenagem por semana</li>
+          <li><strong>Aprovação:</strong> Todas as homenagens passam pela aprovação do editor</li>
+          <li><strong>Fotos:</strong> Máximo de 5MB por foto e 5 fotos na galeria</li>
+          <li><strong>Conteúdo:</strong> Mantenha o texto respeitoso e adequado ao ambiente escolar</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Contador de caracteres do texto
+  const textoField = document.getElementById('texto');
+  const textoCount = document.getElementById('textoCount');
+  
+  textoField.addEventListener('input', function() {
+    const currentLength = this.value.length;
+    textoCount.textContent = currentLength;
+    
+    if (currentLength > 1800) {
+      textoCount.style.color = '#dc3545';
+    } else if (currentLength > 1500) {
+      textoCount.style.color = '#fd7e14';
+    } else {
+      textoCount.style.color = '#6c757d';
+    }
+  });
+  
+  // Validação do formulário
+  const form = document.getElementById('homenagemForm');
+  const submitBtn = document.getElementById('submitBtn');
+  
+  form.addEventListener('submit', function(e) {
+    const fotoPrincipal = document.getElementById('foto_principal').files[0];
+    const fotoPrincipalUrl = document.getElementById('foto_principal_url').value;
+    
+    if (!fotoPrincipal && !fotoPrincipalUrl) {
+      e.preventDefault();
+      alert('Por favor, forneça uma foto principal (upload ou URL).');
+      return;
+    }
+    
+    // Desabilitar botão para evitar envio duplo
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enviando...';
+  });
+  
+  // Validar número de fotos na galeria
+  const galeriaFotos = document.getElementById('galeria_fotos');
+  galeriaFotos.addEventListener('change', function() {
+    if (this.files.length > 5) {
+      alert('Máximo de 5 fotos permitidas na galeria.');
+      this.value = '';
+    }
+  });
+  
+  // Validar URLs da galeria
+  const galeriaUrls = document.getElementById('galeria_urls');
+  galeriaUrls.addEventListener('blur', function() {
+    const urls = this.value.split('\n').filter(url => url.trim());
+    if (urls.length > 5) {
+      alert('Máximo de 5 URLs permitidas na galeria.');
+      this.focus();
+    }
+  });
+});
+</script>
+
+<style>
+.card {
+  border-radius: 15px;
+}
+
+.card-header {
+  border-radius: 15px 15px 0 0 !important;
+}
+
+.form-control:focus {
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+}
+
+.btn-secondary {
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: 600;
+}
+
+.page-header h1 {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+.form-text {
+  font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 15px;
+  }
+  
+  .card-body {
+    padding: 20px;
+  }
+}
+</style>

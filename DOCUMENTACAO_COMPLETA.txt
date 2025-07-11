@@ -1,0 +1,310 @@
+# DOCUMENTAÇÃO COMPLETA - CMBM NEWS
+# Sistema de Notícias Escolares
+# Desenvolvido por: Deyvson Felipe
+
+===============================================================
+ÍNDICE
+===============================================================
+1. VISÃO GERAL DO PROJETO
+2. TECNOLOGIAS UTILIZADAS
+3. ESTRUTURA DO BANCO DE DADOS
+4. INSTALAÇÃO E CONFIGURAÇÃO
+5. ESTRUTURA DE ARQUIVOS
+6. FUNCIONALIDADES POR TIPO DE USUÁRIO
+7. ROTAS E ENDPOINTS
+8. PERSONALIZAÇÃO E CONFIGURAÇÃO
+9. MANUTENÇÃO E BACKUP
+10. RESOLUÇÃO DE PROBLEMAS
+
+===============================================================
+1. VISÃO GERAL DO PROJETO
+===============================================================
+
+O CMBM NEWS é um sistema web de notícias escolares desenvolvido especificamente para o Colégio Municipal Baltazar Moreno. O sistema permite que diferentes tipos de usuários (Diretor, Editor, Aluno, TI) gerenciem e publiquem notícias da escola de forma organizada e controlada.
+
+OBJETIVOS:
+- Centralizar informações da escola
+- Permitir que alunos publiquem notícias (com moderação)
+- Facilitar a comunicação escolar
+- Manter histórico de publicações
+- Controlar acesso por perfis de usuário
+
+===============================================================
+2. TECNOLOGIAS UTILIZADAS
+===============================================================
+
+BACKEND:
+- Node.js (Runtime JavaScript)
+- Express.js (Framework web)
+- PostgreSQL (Banco de dados)
+- EJS (Template engine)
+- Express-session (Gerenciamento de sessões)
+- Bcrypt (Criptografia de senhas)
+
+FRONTEND:
+- Bootstrap 5.3.0 (Framework CSS)
+- Font Awesome 6.4.0 (Ícones)
+- JavaScript ES6 (Interatividade)
+
+SEGURANÇA:
+- Autenticação por sessão
+- Hash de senhas com bcrypt
+- Controle de acesso por roles
+- Proteção CSRF básica
+
+===============================================================
+3. ESTRUTURA DO BANCO DE DADOS
+===============================================================
+
+TABELA: usuarios
+- id (SERIAL PRIMARY KEY)
+- nome (VARCHAR 255, NOT NULL)
+- email (VARCHAR 255, UNIQUE, NOT NULL)
+- senha_hash (VARCHAR 255, NOT NULL)
+- tipo (VARCHAR 50, DEFAULT 'aluno') - Valores: 'diretor', 'editor', 'aluno', 'ti'
+- ativo (VARCHAR 10, DEFAULT 'true')
+- turma (VARCHAR 50) - Para alunos
+- ano (VARCHAR 50) - Para alunos
+
+TABELA: noticias
+- id (SERIAL PRIMARY KEY)
+- titulo (TEXT, NOT NULL)
+- slug (TEXT, UNIQUE, NOT NULL)
+- conteudo (TEXT, NOT NULL)
+- categoria (TEXT, DEFAULT 'Geral')
+- imagem_url (TEXT)
+- status (TEXT, DEFAULT 'rascunho') - Valores: 'rascunho', 'aguardando_revisao', 'aprovada', 'recusada', 'publicada'
+- observacoes (TEXT) - Feedback do editor
+- autor_id (INTEGER, FOREIGN KEY usuarios.id)
+- revisor_id (INTEGER, FOREIGN KEY usuarios.id)
+- data_criacao (TIMESTAMP, DEFAULT NOW())
+- data_publicacao (TIMESTAMP)
+
+===============================================================
+4. INSTALAÇÃO E CONFIGURAÇÃO
+===============================================================
+
+PASSO 1: PREPARAR AMBIENTE
+1. Instalar Node.js (versão 16 ou superior)
+2. Instalar PostgreSQL
+3. Criar banco de dados chamado 'cmbm_news'
+
+PASSO 2: CONFIGURAR PROJETO
+1. Criar pasta do projeto: mkdir cmbm-news
+2. Entrar na pasta: cd cmbm-news
+3. Inicializar npm: npm init -y
+
+PASSO 3: INSTALAR DEPENDÊNCIAS
+npm install express ejs express-session bcrypt pg express-ejs-layouts
+
+PASSO 4: CRIAR ESTRUTURA DE PASTAS
+mkdir views public
+mkdir views/partials (se necessário)
+
+PASSO 5: CONFIGURAR BANCO DE DADOS
+1. Criar arquivo database.js (código fornecido)
+2. Configurar variáveis de ambiente:
+   - DATABASE_URL (se usando serviço externo)
+   - SESSION_SECRET
+   - PORT
+
+PASSO 6: CRIAR ARQUIVOS PRINCIPAIS
+1. server.js (servidor principal)
+2. database.js (configuração do banco)
+3. Arquivos EJS em views/
+4. Arquivo CSS em public/
+
+PASSO 7: EXECUTAR PROJETO
+1. node server.js
+2. Acessar http://localhost:5000
+
+===============================================================
+5. ESTRUTURA DE ARQUIVOS
+===============================================================
+
+cmbm-news/
+├── server.js                 # Servidor principal
+├── database.js              # Configuração do banco
+├── package.json             # Dependências
+├── views/                   # Templates EJS
+│   ├── layout.ejs          # Layout principal
+│   ├── home.ejs            # Página inicial
+│   ├── login.ejs           # Página de login
+│   ├── admin.ejs           # Painel do diretor
+│   ├── editor.ejs          # Painel do editor
+│   ├── reporter.ejs        # Painel do aluno
+│   ├── ti.ejs              # Painel de TI
+│   ├── nova.ejs            # Criar notícia
+│   ├── editar.ejs          # Editar notícia
+│   ├── revisar.ejs         # Revisar notícia
+│   ├── noticia.ejs         # Visualizar notícia
+│   ├── usuarios.ejs        # Gerenciar usuários
+│   └── error.ejs           # Página de erro
+├── public/                  # Arquivos estáticos
+│   ├── style.css           # Estilos personalizados
+│   └── logo.png            # Logo da escola
+└── DOCUMENTACAO_COMPLETA.txt # Esta documentação
+
+===============================================================
+6. FUNCIONALIDADES POR TIPO DE USUÁRIO
+===============================================================
+
+### 6. ESTRUTURA DE USUÁRIOS
+
+**Diretor (Admin)**
+- Pode criar, editar, publicar e excluir qualquer notícia
+- Gerencia usuários (com TI)
+- Acesso total ao sistema
+- Rota de exclusão: /excluir/:id
+
+**Editor**
+- Revisa notícias enviadas pelos alunos
+- Pode aprovar, recusar ou solicitar alterações
+- Pode editar e publicar notícias
+- Fornece feedback através do campo "observações"
+
+**Aluno**
+- Cria notícias e envia para revisão
+- Pode editar suas próprias notícias (sempre reenvia para revisão)
+- Visualiza feedback dos editores na página de edição
+- Pode excluir suas próprias notícias
+- Rota de edição: /editar/:id
+- Rota de exclusão: /excluir-noticia/:id
+
+**TI**
+- Gerencia usuários
+- Monitora sistema
+- Suporte técnico
+
+### 6.1. FLUXO DE TRABALHO
+
+1. **Aluno cria notícia** → Status: "rascunho" ou "aguardando_revisao"
+2. **Editor revisa** → Pode aprovar, recusar ou solicitar alterações
+3. **Se recusada** → Aluno vê feedback e pode editar
+4. **Ao editar** → Notícia volta para "aguardando_revisao" automaticamente
+5. **Editor aprova** → Status: "publicada" (aparece no site público)
+
+===============================================================
+7. ROTAS E ENDPOINTS
+===============================================================
+
+ROTAS PÚBLICAS:
+GET  /                      # Página inicial com notícias
+GET  /noticia/:slug         # Visualizar notícia específica
+GET  /login                 # Página de login
+POST /login                 # Processar login
+GET  /logout                # Logout
+
+ROTAS AUTENTICADAS:
+GET  /dashboard             # Redireciona para painel específico
+
+ROTAS DO DIRETOR:
+GET  /admin                 # Painel administrativo
+GET  /admin/nova            # Criar nova notícia
+POST /admin/nova            # Salvar nova notícia
+GET  /admin/editar/:id      # Editar notícia
+POST /admin/editar/:id      # Salvar edição
+POST /excluir/:id           # Excluir notícia
+
+ROTAS DO EDITOR:
+GET  /editor                # Painel do editor
+GET  /revisar/:id           # Revisar notícia
+POST /revisar/:id           # Processar revisão
+
+ROTAS DO ALUNO:
+GET  /reporter              # Painel do aluno
+GET  /criar-noticia         # Criar nova notícia
+POST /criar-noticia         # Salvar nova notícia
+GET  /editar/:id            # Editar notícia própria
+POST /editar/:id            # Salvar edição
+
+ROTAS DE TI:
+GET  /ti                    # Painel de TI
+GET  /usuarios              # Gerenciar usuários
+POST /usuarios              # Criar usuário
+POST /usuarios/:id/edit     # Editar usuário
+POST /usuarios/:id/toggle   # Ativar/desativar usuário
+
+===============================================================
+8. PERSONALIZAÇÃO E CONFIGURAÇÃO
+===============================================================
+
+CORES E TEMA:
+- Cor principal: #1a365d (azul escuro)
+- Arquivo: public/style.css
+- Classes principais: .bg-navy, .text-navy
+
+LOGO:
+- Arquivo: public/logo.png
+- Tamanho recomendado: 40px altura
+- Formato: PNG com fundo transparente
+
+CATEGORIAS PADRÃO:
+- Geral
+- Eventos
+- Educação
+- Esportes
+- Cultura
+- Avisos
+
+CONFIGURAÇÕES NO CÓDIGO:
+- SESSION_SECRET: Chave de segurança das sessões
+- PORT: Porta do servidor (padrão 5000)
+- DATABASE_URL: String de conexão do PostgreSQL
+
+===============================================================
+9. MANUTENÇÃO E BACKUP
+===============================================================
+
+BACKUP DO BANCO:
+1. PostgreSQL: pg_dump cmbm_news > backup.sql
+2. Restaurar: psql cmbm_news < backup.sql
+
+LOGS DO SISTEMA:
+- Logs são exibidos no console
+- Para logs persistentes, implementar winston ou similar
+
+ATUALIZAÇÕES:
+1. Backup do banco antes de qualquer alteração
+2. Testar em ambiente de desenvolvimento
+3. Aplicar migrações se necessário
+
+MONITORAMENTO:
+- Verificar espaço em disco
+- Monitorar performance do banco
+- Acompanhar logs de erro
+
+===============================================================
+10. RESOLUÇÃO DE PROBLEMAS
+===============================================================
+
+### 7. PROBLEMAS CONHECIDOS E SOLUÇÕES
+
+- **Problema de permissões**: Verificar sempre os tipos de usuário nas rotas
+- **Sessões**: Configurar adequadamente as sessões para evitar logout automático
+- **Banco de dados**: Fazer backup regular do banco PostgreSQL
+- **Edição de notícias**: Alunos editam via /editar/:id, não /admin/editar/:id
+- **Exclusão de notícias**: Alunos usam /excluir-noticia/:id, admin usa /excluir/:id
+- **Modais**: Usar IDs únicos e classes Bootstrap corretas para evitar conflitos
+- **Logo**: Não duplicar texto no header quando há logo
+- **Fluxo de alunos**: Sempre reenviar para revisão após editar
+- **Feedback do editor**: Exibir observações na página de edição quando status é 'recusada'
+- **Painel do aluno**: Remover referências a campos inexistentes (turma, ano) nas queries
+- **Template do reporter**: Garantir que o template EJS está completo e correto
+- **Modais de confirmação**: Usar IDs únicos para cada modal para evitar conflitos
+
+===============================================================
+CONTATO E SUPORTE
+===============================================================
+
+Desenvolvedor: Deyvson Felipe
+Instagram: @deyvsonf.lima
+Facebook: facebook.com/share/1Ave8zcYF3/
+
+Para reportar bugs ou solicitar melhorias, entre em contato através das redes sociais.
+
+===============================================================
+VERSÃO DA DOCUMENTAÇÃO: 1.0
+DATA: Janeiro 2025
+PROJETO: CMBM NEWS - Sistema de Notícias Escolares
+===============================================================
