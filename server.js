@@ -2154,18 +2154,112 @@ app.post('/usuarios', requireRole(['ti', 'diretor']), async (req, res) => {
         const senhaTemporaria = Math.random().toString(36).slice(-8);
         const senhaHash = await bcrypt.hash(senhaTemporaria, 10);
 
-        // Inserir usuário
+        // Inserir usuário (inativo por padrão)
         db.run(
           'INSERT INTO usuarios (nome, email, senha_hash, tipo, ano, turma, ativo) VALUES (?, ?, ?, ?, ?, ?, ?)',
-          [nome, email.toLowerCase(), senhaHash, tipo, ano || null, turma || null, 1],
-          function(err) {
+          [nome, email.toLowerCase(), senhaHash, tipo, ano || null, turma || null, 'false'],
+          async function(err) {
             if (err) {
               console.error('Erro ao inserir usuário:', err);
               return renderWithUsers('Erro ao criar usuário');
             }
 
-            // Redirecionar com sucesso
-            res.redirect('/usuarios?success=Usuário criado com sucesso');
+            const novoUserId = this.lastID;
+
+            try {
+              // Gerar código de ativação
+              const codigoAtivacao = generateVerificationCode();
+              const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+              const expiresAtISO = expiresAt.toISOString();
+
+              // Inserir código de ativação
+              await new Promise((resolve, reject) => {
+                db.run(
+                  'INSERT INTO reset_codes (user_id, code, expires_at) VALUES (?, ?, ?)',
+                  [novoUserId, codigoAtivacao, expiresAtISO],
+                  (err) => {
+                    if (err) reject(err);
+                    else resolve();
+                  }
+                );
+              });
+
+              // Enviar email de ativação
+              const emailSubject = '🎓 Ative sua conta - CMBM NEWS';
+              const baseUrl = BASE_URL;
+              const content = `
+                <div style="text-align: center; margin-bottom: 30px;">
+                  <div style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <h2 style="margin: 0; font-size: 24px;">🎓 Bem-vindo ao CMBM NEWS!</h2>
+                    <p style="margin: 10px 0 0 0; opacity: 0.9;">Active sua conta para começar</p>
+                  </div>
+                </div>
+
+                <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 25px; border-radius: 10px; margin: 25px 0; border-left: 4px solid #001f3f;">
+                  <h3 style="color: #001f3f; margin: 0 0 15px 0; font-size: 18px;">👋 Olá, ${nome}!</h3>
+                  <p style="margin: 0 0 15px 0; color: #495057; line-height: 1.6;">
+                    Sua conta no CMBM NEWS foi criada com sucesso! Para começar a usar o sistema, você precisa ativar sua conta clicando no link abaixo.
+                  </p>
+                </div>
+
+                <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 20px; border-radius: 10px; margin: 20px 0;">
+                  <h4 style="color: #495057; margin: 0 0 15px 0; font-size: 16px;">📋 Seus dados de acesso:</h4>
+                  <p style="margin: 0 0 10px 0; color: #495057;"><strong>Email:</strong> ${email}</p>
+                  <p style="margin: 0 0 10px 0; color: #495057;"><strong>Tipo de usuário:</strong> ${tipo}</p>
+                  ${ano ? `<p style="margin: 0 0 10px 0; color: #495057;"><strong>Ano:</strong> ${ano}</p>` : ''}
+                  ${turma ? `<p style="margin: 0; color: #495057;"><strong>Turma:</strong> ${turma}</p>` : ''}
+                </div>
+
+                <div style="background: linear-gradient(135deg, #001f3f 0%, #003366 100%); color: white; padding: 30px; border-radius: 15px; margin: 25px 0; text-align: center; box-shadow: 0 8px 16px rgba(0,31,63,0.3);">
+                  <h4 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 300;">🔑 Ativar Conta</h4>
+                  <p style="margin: 0 0 25px 0; opacity: 0.9; line-height: 1.5;">
+                    Clique no botão abaixo para ativar sua conta. O link é válido por 24 horas.
+                  </p>
+                  <a href="${baseUrl}/ativar-conta/token/${codigoAtivacao}" 
+                     style="background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%); color: #001f3f; padding: 15px 30px; text-decoration: none; border-radius: 25px; display: inline-block; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: all 0.3s;">
+                    🚀 Ativar Minha Conta
+                  </a>
+                </div>
+
+                <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 10px; margin: 25px 0;">
+                  <h4 style="color: #856404; margin: 0 0 15px 0; font-size: 16px;">
+                    <span style="font-size: 20px;">📋</span> Próximos Passos:
+                  </h4>
+                  <ol style="margin: 0; color: #856404; padding-left: 20px;">
+                    <li style="margin-bottom: 8px;">🔗 Clique no link "Ativar Minha Conta" acima</li>
+                    <li style="margin-bottom: 8px;">🔑 Faça login com seu email e senha temporária</li>
+                    <li style="margin-bottom: 8px;">🔒 Altere sua senha no perfil</li>
+                    <li style="margin-bottom: 0;">📰 Comece a usar o CMBM NEWS!</li>
+                  </ol>
+                </div>
+
+                <div style="background: #f8d7da; border: 1px solid #f5c6cb; padding: 20px; border-radius: 10px; margin: 25px 0;">
+                  <h4 style="color: #721c24; margin: 0 0 15px 0; font-size: 16px;">
+                    <span style="font-size: 20px;">🚨</span> Importante:
+                  </h4>
+                  <ul style="margin: 0; color: #721c24; padding-left: 20px;">
+                    <li style="margin-bottom: 8px;">⏰ Este link expira em 24 horas</li>
+                    <li style="margin-bottom: 8px;">🔒 Use apenas uma vez</li>
+                    <li style="margin-bottom: 8px;">🚫 Não compartilhe este link</li>
+                    <li style="margin-bottom: 0;">❌ Se você não solicitou esta conta, ignore este email</li>
+                  </ul>
+                </div>
+              `;
+
+              const emailHtml = createEmailTemplate('Ativação de Conta', content);
+              const emailSent = await sendEmail(email, emailSubject, emailHtml);
+
+              if (emailSent) {
+                console.log('✅ Email de ativação enviado para:', email);
+                res.redirect('/usuarios?success=Usuário criado com sucesso! Email de ativação enviado.');
+              } else {
+                console.error('❌ Falha no envio do email de ativação para:', email);
+                res.redirect('/usuarios?success=Usuário criado, mas falha no envio do email de ativação');
+              }
+            } catch (emailError) {
+              console.error('🚨 Erro ao enviar email de ativação:', emailError);
+              res.redirect('/usuarios?success=Usuário criado, mas erro no envio do email de ativação');
+            }
           }
         );
       } catch (hashError) {
@@ -2764,56 +2858,109 @@ app.post('/usuarios/novo', requireAuth, requireRole(['admin', 'ti']), async (req
     const senhaFinal = senha || generateRandomPassword();
     const senhaHash = await bcrypt.hash(senhaFinal, 10);
 
-    // Inserir usuário
-    await new Promise((resolve, reject) => {
+    // Inserir usuário (inativo por padrão)
+    const userId = await new Promise((resolve, reject) => {
       db.run(
         'INSERT INTO usuarios (nome, email, senha_hash, tipo, ano, turma, ativo) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [nome, email.toLowerCase(), senhaHash, tipo, ano || null, turma || null, 1],
-        (err) => {
+        [nome, email.toLowerCase(), senhaHash, tipo, ano || null, turma || null, 'false'],
+        function(err) {
           if (err) reject(err);
-          else resolve();
+          else resolve(this.lastID);
         }
       );
     });
 
-    // Enviar email com credenciais
-    if (senha) {
-      const emailSubject = '🎓 Conta criada - CMBM NEWS';
+    try {
+      // Gerar código de ativação
+      const codigoAtivacao = generateVerificationCode();
+      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+      const expiresAtISO = expiresAt.toISOString();
+
+      // Inserir código de ativação
+      await new Promise((resolve, reject) => {
+        db.run(
+          'INSERT INTO reset_codes (user_id, code, expires_at) VALUES (?, ?, ?)',
+          [userId, codigoAtivacao, expiresAtISO],
+          (err) => {
+            if (err) reject(err);
+            else resolve();
+          }
+        );
+      });
+
+      // Enviar email de ativação com senha (se fornecida)
+      const emailSubject = '🎓 Ative sua conta - CMBM NEWS';
+      const baseUrl = BASE_URL;
       const content = `
-        <div style="background: linear-gradient(135deg, #001f3f 0%, #003366 100%); color: white; padding: 25px; border-radius: 10px; margin: 20px 0;">
-          <h2 style="margin: 0 0 15px 0; font-size: 24px;">🎓 Bem-vindo ao CMBM NEWS!</h2>
-          <p style="margin: 0; opacity: 0.9;">Sua conta foi criada com sucesso</p>
+        <div style="text-align: center; margin-bottom: 30px;">
+          <div style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+            <h2 style="margin: 0; font-size: 24px;">🎓 Bem-vindo ao CMBM NEWS!</h2>
+            <p style="margin: 10px 0 0 0; opacity: 0.9;">Active sua conta para começar</p>
+          </div>
         </div>
-        
-        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
-          <h3 style="margin: 0 0 15px 0; color: #495057;">🔑 Suas credenciais:</h3>
-          <p style="margin: 0 0 10px 0;"><strong>Email:</strong> ${email}</p>
-          <p style="margin: 0 0 10px 0;"><strong>Senha:</strong> ${senhaFinal}</p>
-          <p style="margin: 0 0 10px 0;"><strong>Tipo:</strong> ${tipo}</p>
+
+        <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 25px; border-radius: 10px; margin: 25px 0; border-left: 4px solid #001f3f;">
+          <h3 style="color: #001f3f; margin: 0 0 15px 0; font-size: 18px;">👋 Olá, ${nome}!</h3>
+          <p style="margin: 0 0 15px 0; color: #495057; line-height: 1.6;">
+            Sua conta no CMBM NEWS foi criada com sucesso! Para começar a usar o sistema, você precisa ativar sua conta clicando no link abaixo.
+          </p>
         </div>
-        
-        <div style="background: #fff3cd; padding: 20px; border-radius: 10px; margin: 20px 0;">
-          <h4 style="margin: 0 0 15px 0; color: #856404;">📝 Próximos passos:</h4>
-          <ul style="margin: 0; color: #856404; padding-left: 20px;">
-            <li>Acesse o sistema com suas credenciais</li>
-            <li>Altere sua senha no perfil</li>
-            <li>Complete suas informações pessoais</li>
+
+        <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 20px; border-radius: 10px; margin: 20px 0;">
+          <h4 style="color: #495057; margin: 0 0 15px 0; font-size: 16px;">📋 Seus dados de acesso:</h4>
+          <p style="margin: 0 0 10px 0; color: #495057;"><strong>Email:</strong> ${email}</p>
+          <p style="margin: 0 0 10px 0; color: #495057;"><strong>Senha:</strong> ${senhaFinal}</p>
+          <p style="margin: 0 0 10px 0; color: #495057;"><strong>Tipo de usuário:</strong> ${tipo}</p>
+          ${ano ? `<p style="margin: 0 0 10px 0; color: #495057;"><strong>Ano:</strong> ${ano}</p>` : ''}
+          ${turma ? `<p style="margin: 0; color: #495057;"><strong>Turma:</strong> ${turma}</p>` : ''}
+        </div>
+
+        <div style="background: linear-gradient(135deg, #001f3f 0%, #003366 100%); color: white; padding: 30px; border-radius: 15px; margin: 25px 0; text-align: center; box-shadow: 0 8px 16px rgba(0,31,63,0.3);">
+          <h4 style="margin: 0 0 20px 0; font-size: 20px; font-weight: 300;">🔑 Ativar Conta</h4>
+          <p style="margin: 0 0 25px 0; opacity: 0.9; line-height: 1.5;">
+            Clique no botão abaixo para ativar sua conta. O link é válido por 24 horas.
+          </p>
+          <a href="${baseUrl}/ativar-conta/token/${codigoAtivacao}" 
+             style="background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%); color: #001f3f; padding: 15px 30px; text-decoration: none; border-radius: 25px; display: inline-block; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: all 0.3s;">
+            🚀 Ativar Minha Conta
+          </a>
+        </div>
+
+        <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 20px; border-radius: 10px; margin: 25px 0;">
+          <h4 style="color: #856404; margin: 0 0 15px 0; font-size: 16px;">
+            <span style="font-size: 20px;">📋</span> Próximos Passos:
+          </h4>
+          <ol style="margin: 0; color: #856404; padding-left: 20px;">
+            <li style="margin-bottom: 8px;">🔗 Clique no link "Ativar Minha Conta" acima</li>
+            <li style="margin-bottom: 8px;">🔑 Faça login com seu email e senha</li>
+            <li style="margin-bottom: 8px;">🔒 Altere sua senha no perfil (recomendado)</li>
+            <li style="margin-bottom: 0;">📰 Comece a usar o CMBM NEWS!</li>
+          </ol>
+        </div>
+
+        <div style="background: #f8d7da; border: 1px solid #f5c6cb; padding: 20px; border-radius: 10px; margin: 25px 0;">
+          <h4 style="color: #721c24; margin: 0 0 15px 0; font-size: 16px;">
+            <span style="font-size: 20px;">🚨</span> Importante:
+          </h4>
+          <ul style="margin: 0; color: #721c24; padding-left: 20px;">
+            <li style="margin-bottom: 8px;">⏰ Este link expira em 24 horas</li>
+            <li style="margin-bottom: 8px;">🔒 Use apenas uma vez</li>
+            <li style="margin-bottom: 8px;">🚫 Não compartilhe este link</li>
+            <li style="margin-bottom: 0;">❌ Se você não solicitou esta conta, ignore este email</li>
           </ul>
         </div>
       `;
 
-      const emailHtml = createEmailTemplate('Conta Criada', content);
-      try {
-        console.log('📧 Tentando enviar email de confirmação para:', email);
-        const emailSent = await sendEmail(email, emailSubject, emailHtml);
-        if (emailSent) {
-          console.log('✅ Email de confirmação enviado com sucesso para:', email);
-        } else {
-          console.error('❌ Falha no envio do email de confirmação para:', email);
-        }
-      } catch (emailError) {
-        console.error('🚨 Erro ao enviar email de confirmação:', emailError);
+      const emailHtml = createEmailTemplate('Ativação de Conta', content);
+      const emailSent = await sendEmail(email, emailSubject, emailHtml);
+
+      if (emailSent) {
+        console.log('✅ Email de ativação enviado para:', email);
+      } else {
+        console.error('❌ Falha no envio do email de ativação para:', email);
       }
+    } catch (emailError) {
+      console.error('🚨 Erro ao enviar email de ativação:', emailError);
     }
 
     res.render('editar-usuario', { 
