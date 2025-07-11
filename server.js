@@ -2682,6 +2682,132 @@ app.get('/redefinir-senha/token/:token', async (req, res) => {
   }
 });
 
+// Rota para página de novo usuário
+app.get('/usuarios/novo', requireAuth, requireRole(['admin', 'ti']), (req, res) => {
+  res.render('editar-usuario', { 
+    user: req.session.user,
+    usuario: null,
+    error: null,
+    success: null,
+    action: 'criar'
+  });
+});
+
+// Rota para criar novo usuário
+app.post('/usuarios/novo', requireAuth, requireRole(['admin', 'ti']), async (req, res) => {
+  try {
+    const { nome, email, tipo, ano, turma, senha } = req.body;
+
+    if (!nome || !email || !tipo) {
+      return res.render('editar-usuario', { 
+        user: req.session.user,
+        usuario: null,
+        error: 'Nome, email e tipo são obrigatórios',
+        success: null,
+        action: 'criar'
+      });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.render('editar-usuario', { 
+        user: req.session.user,
+        usuario: null,
+        error: 'Email inválido',
+        success: null,
+        action: 'criar'
+      });
+    }
+
+    const db = getDatabase();
+
+    // Verificar se email já existe
+    const existingUser = await new Promise((resolve, reject) => {
+      db.get('SELECT id FROM usuarios WHERE email = ?', [email.toLowerCase()], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+
+    if (existingUser) {
+      return res.render('editar-usuario', { 
+        user: req.session.user,
+        usuario: null,
+        error: 'Email já está em uso',
+        success: null,
+        action: 'criar'
+      });
+    }
+
+    // Gerar senha padrão se não fornecida
+    const senhaFinal = senha || generateRandomPassword();
+    const senhaHash = await bcrypt.hash(senhaFinal, 10);
+
+    // Inserir usuário
+    await new Promise((resolve, reject) => {
+      db.run(
+        'INSERT INTO usuarios (nome, email, senha_hash, tipo, ano, turma, ativo) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [nome, email.toLowerCase(), senhaHash, tipo, ano || null, turma || null, 1],
+        (err) => {
+          if (err) reject(err);
+          else resolve();
+        }
+      );
+    });
+
+    // Enviar email com credenciais
+    if (senha) {
+      const emailSubject = '🎓 Conta criada - CMBM NEWS';
+      const content = `
+        <div style="background: linear-gradient(135deg, #001f3f 0%, #003366 100%); color: white; padding: 25px; border-radius: 10px; margin: 20px 0;">
+          <h2 style="margin: 0 0 15px 0; font-size: 24px;">🎓 Bem-vindo ao CMBM NEWS!</h2>
+          <p style="margin: 0; opacity: 0.9;">Sua conta foi criada com sucesso</p>
+        </div>
+        
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+          <h3 style="margin: 0 0 15px 0; color: #495057;">🔑 Suas credenciais:</h3>
+          <p style="margin: 0 0 10px 0;"><strong>Email:</strong> ${email}</p>
+          <p style="margin: 0 0 10px 0;"><strong>Senha:</strong> ${senhaFinal}</p>
+          <p style="margin: 0 0 10px 0;"><strong>Tipo:</strong> ${tipo}</p>
+        </div>
+        
+        <div style="background: #fff3cd; padding: 20px; border-radius: 10px; margin: 20px 0;">
+          <h4 style="margin: 0 0 15px 0; color: #856404;">📝 Próximos passos:</h4>
+          <ul style="margin: 0; color: #856404; padding-left: 20px;">
+            <li>Acesse o sistema com suas credenciais</li>
+            <li>Altere sua senha no perfil</li>
+            <li>Complete suas informações pessoais</li>
+          </ul>
+        </div>
+      `;
+
+      const emailHtml = createEmailTemplate('Conta Criada', content);
+      try {
+        await sendEmail(email, emailSubject, emailHtml);
+      } catch (emailError) {
+        console.error('Erro ao enviar email:', emailError);
+      }
+    }
+
+    res.render('editar-usuario', { 
+      user: req.session.user,
+      usuario: null,
+      error: null,
+      success: `Usuário ${nome} criado com sucesso!`,
+      action: 'criar'
+    });
+
+  } catch (error) {
+    console.error('Erro ao criar usuário:', error);
+    res.render('editar-usuario', { 
+      user: req.session.user,
+      usuario: null,
+      error: 'Erro interno do servidor',
+      success: null,
+      action: 'criar'
+    });
+  }
+});
+
 // Rota para página de redefinição de senha (ROTA GENÉRICA - DEVE VIR DEPOIS)
 app.get('/redefinir-senha', (req, res) => {
   res.render('redefinir-senha', { 
@@ -3650,6 +3776,78 @@ app.post('/perfil/remover-foto', requireAuth, (req, res) => {
   } catch (error) {
     console.error('Erro ao remover foto:', error);
     res.redirect('/perfil?error=Erro interno do servidor');
+  }
+});
+
+// Rota para confirmar alteração de senha
+app.post('/perfil/confirmar-alteracao', requireAuth, async (req, res) => {
+  try {
+    const { codigo } = req.body;
+
+    if (!codigo || codigo.length !== 5) {
+      return res.render('verificar-codigo-senha', { 
+        user: req.session.user,
+        error: 'Código inválido',
+        success: null
+      });
+    }
+
+    const db = getDatabase();
+
+    // Verificar código
+    const resetData = await new Promise((resolve, reject) => {
+      db.get(`
+        SELECT * FROM reset_codes 
+        WHERE code = ? AND user_id = ? AND used = 0 AND expires_at > datetime('now', 'localtime')
+      `, [codigo.toUpperCase(), req.session.userId], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+
+    if (!resetData) {
+      return res.render('verificar-codigo-senha', { 
+        user: req.session.user,
+        error: 'Código inválido ou expirado',
+        success: null
+      });
+    }
+
+    // Aplicar nova senha
+    const novaSenhaHash = resetData.observacoes; // Nova senha estava salva no campo observacoes
+    await new Promise((resolve, reject) => {
+      db.run('UPDATE usuarios SET senha_hash = ? WHERE id = ?', [novaSenhaHash, req.session.userId], (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    // Marcar código como usado
+    await new Promise((resolve, reject) => {
+      db.run('UPDATE reset_codes SET used = 1 WHERE id = ?', [resetData.id], (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    // Destruir sessão para forçar novo login
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Erro ao destruir sessão:', err);
+      }
+      res.render('login', { 
+        error: null,
+        success: 'Senha alterada com sucesso! Faça login com a nova senha.'
+      });
+    });
+
+  } catch (error) {
+    console.error('Erro ao confirmar alteração:', error);
+    res.render('verificar-codigo-senha', { 
+      user: req.session.user,
+      error: 'Erro interno do servidor',
+      success: null
+    });
   }
 });
 
