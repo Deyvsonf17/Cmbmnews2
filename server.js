@@ -2184,7 +2184,7 @@ app.post('/usuarios', requireRole(['ti', 'diretor']), async (req, res) => {
                 );
               });
 
-              // Enviar email de ativação
+              // Enviar email de ativação com senha temporária
               const emailSubject = '🎓 Ative sua conta - CMBM NEWS';
               const baseUrl = BASE_URL;
               const content = `
@@ -2202,12 +2202,13 @@ app.post('/usuarios', requireRole(['ti', 'diretor']), async (req, res) => {
                   </p>
                 </div>
 
-                <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 20px; border-radius: 10px; margin: 20px 0;">
-                  <h4 style="color: #495057; margin: 0 0 15px 0; font-size: 16px;">📋 Seus dados de acesso:</h4>
-                  <p style="margin: 0 0 10px 0; color: #495057;"><strong>Email:</strong> ${email}</p>
-                  <p style="margin: 0 0 10px 0; color: #495057;"><strong>Tipo de usuário:</strong> ${tipo}</p>
-                  ${ano ? `<p style="margin: 0 0 10px 0; color: #495057;"><strong>Ano:</strong> ${ano}</p>` : ''}
-                  ${turma ? `<p style="margin: 0; color: #495057;"><strong>Turma:</strong> ${turma}</p>` : ''}
+                <div style="background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); padding: 20px; border-radius: 10px; margin: 20px 0; border: 2px solid #ffc107;">
+                  <h4 style="color: #856404; margin: 0 0 15px 0; font-size: 16px;">📋 Seus dados de acesso:</h4>
+                  <p style="margin: 0 0 10px 0; color: #856404;"><strong>Email:</strong> ${email}</p>
+                  <p style="margin: 0 0 10px 0; color: #856404;"><strong>Senha temporária:</strong> <span style="background: #fff; padding: 5px 8px; border-radius: 5px; font-family: monospace; font-weight: bold; color: #d63384;">${senhaTemporaria}</span></p>
+                  <p style="margin: 0 0 10px 0; color: #856404;"><strong>Tipo de usuário:</strong> ${tipo}</p>
+                  ${ano ? `<p style="margin: 0 0 10px 0; color: #856404;"><strong>Ano:</strong> ${ano}</p>` : ''}
+                  ${turma ? `<p style="margin: 0; color: #856404;"><strong>Turma:</strong> ${turma}</p>` : ''}
                 </div>
 
                 <div style="background: linear-gradient(135deg, #001f3f 0%, #003366 100%); color: white; padding: 30px; border-radius: 15px; margin: 25px 0; text-align: center; box-shadow: 0 8px 16px rgba(0,31,63,0.3);">
@@ -2228,7 +2229,7 @@ app.post('/usuarios', requireRole(['ti', 'diretor']), async (req, res) => {
                   <ol style="margin: 0; color: #856404; padding-left: 20px;">
                     <li style="margin-bottom: 8px;">🔗 Clique no link "Ativar Minha Conta" acima</li>
                     <li style="margin-bottom: 8px;">🔑 Faça login com seu email e senha temporária</li>
-                    <li style="margin-bottom: 8px;">🔒 Altere sua senha no perfil</li>
+                    <li style="margin-bottom: 8px;">🔒 Altere sua senha no perfil (recomendado)</li>
                     <li style="margin-bottom: 0;">📰 Comece a usar o CMBM NEWS!</li>
                   </ol>
                 </div>
@@ -2241,6 +2242,7 @@ app.post('/usuarios', requireRole(['ti', 'diretor']), async (req, res) => {
                     <li style="margin-bottom: 8px;">⏰ Este link expira em 24 horas</li>
                     <li style="margin-bottom: 8px;">🔒 Use apenas uma vez</li>
                     <li style="margin-bottom: 8px;">🚫 Não compartilhe este link</li>
+                    <li style="margin-bottom: 8px;">🔑 Guarde sua senha temporária em local seguro</li>
                     <li style="margin-bottom: 0;">❌ Se você não solicitou esta conta, ignore este email</li>
                   </ul>
                 </div>
@@ -2251,6 +2253,7 @@ app.post('/usuarios', requireRole(['ti', 'diretor']), async (req, res) => {
 
               if (emailSent) {
                 console.log('✅ Email de ativação enviado para:', email);
+                console.log('🔑 Senha temporária gerada:', senhaTemporaria);
                 res.redirect('/usuarios?success=Usuário criado com sucesso! Email de ativação enviado.');
               } else {
                 console.error('❌ Falha no envio do email de ativação para:', email);
