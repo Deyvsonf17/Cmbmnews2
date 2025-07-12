@@ -25,40 +25,53 @@ const createRateLimit = (windowMs, max, message) => {
 
 // Rate limits específicos
 const rateLimits = {
-  // Limite geral - 100 requisições por 15 minutos
-  general: createRateLimit(
-    15 * 60 * 1000, // 15 minutos
-    100,
-    'Muitas requisições. Tente novamente em 15 minutos.'
-  ),
-  
-  // Login - 5 tentativas por 15 minutos
-  login: createRateLimit(
-    15 * 60 * 1000,
-    5,
-    'Muitas tentativas de login. Tente novamente em 15 minutos.'
-  ),
-  
-  // Upload - 10 uploads por hora
-  upload: createRateLimit(
-    60 * 60 * 1000, // 1 hora
-    10,
-    'Muitos uploads. Tente novamente em 1 hora.'
-  ),
-  
-  // API endpoints - 50 requisições por minuto
-  api: createRateLimit(
-    60 * 1000, // 1 minuto
-    50,
-    'Muitas requisições à API. Tente novamente em 1 minuto.'
-  ),
-  
-  // Reset de senha - 3 tentativas por hora
-  passwordReset: createRateLimit(
-    60 * 60 * 1000,
-    3,
-    'Muitas tentativas de reset de senha. Tente novamente em 1 hora.'
-  )
+  general: rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 1000, // máximo de 1000 requests por IP
+    message: 'Muitas tentativas. Tente novamente em 15 minutos.',
+    standardHeaders: true,
+    legacyHeaders: false,
+    trustProxy: true,
+    keyGenerator: (req) => {
+      return req.ip || req.connection.remoteAddress || 'unknown';
+    }
+  }),
+
+  login: rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 10, // máximo de 10 tentativas de login por IP
+    message: 'Muitas tentativas de login. Tente novamente em 15 minutos.',
+    standardHeaders: true,
+    legacyHeaders: false,
+    trustProxy: true,
+    keyGenerator: (req) => {
+      return req.ip || req.connection.remoteAddress || 'unknown';
+    }
+  }),
+
+  upload: rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hora
+    max: 50, // máximo de 50 uploads por IP
+    message: 'Muitos uploads. Tente novamente em 1 hora.',
+    standardHeaders: true,
+    legacyHeaders: false,
+    trustProxy: true,
+    keyGenerator: (req) => {
+      return req.ip || req.connection.remoteAddress || 'unknown';
+    }
+  }),
+
+  passwordReset: rateLimit({
+    windowMs: 60 * 60 * 1000, // 1 hora
+    max: 5, // máximo de 5 tentativas por IP
+    message: 'Muitas tentativas de redefinição. Tente novamente em 1 hora.',
+    standardHeaders: true,
+    legacyHeaders: false,
+    trustProxy: true,
+    keyGenerator: (req) => {
+      return req.ip || req.connection.remoteAddress || 'unknown';
+    }
+  })
 };
 
 // Middleware de compressão
@@ -95,34 +108,34 @@ const securityHeaders = (req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
-  
+
   // HTTPS redirect (se em produção)
   if (process.env.NODE_ENV === 'production' && req.header('x-forwarded-proto') !== 'https') {
     res.redirect(`https://${req.header('host')}${req.url}`);
     return;
   }
-  
+
   next();
 };
 
 // Middleware para log de performance
 const performanceLogger = (req, res, next) => {
   const startTime = Date.now();
-  
+
   res.on('finish', () => {
     const duration = Date.now() - startTime;
-    
+
     // Log requisições lentas (> 1 segundo)
     if (duration > 1000) {
       console.warn(`🐌 Requisição lenta: ${req.method} ${req.url} - ${duration}ms`);
     }
-    
+
     // Log para análise de performance
     if (process.env.NODE_ENV === 'development') {
       console.log(`📊 ${req.method} ${req.url} - ${res.statusCode} - ${duration}ms`);
     }
   });
-  
+
   next();
 };
 
@@ -141,13 +154,13 @@ const requestTimeout = (timeout = 30000) => {
 // Middleware para limitar tamanho do body
 const bodySizeLimit = (req, res, next) => {
   const maxSize = 10 * 1024 * 1024; // 10MB
-  
+
   if (req.headers['content-length'] && parseInt(req.headers['content-length']) > maxSize) {
     const error = new Error('Payload muito grande');
     error.statusCode = 413;
     return next(error);
   }
-  
+
   next();
 };
 
@@ -159,7 +172,7 @@ const sqlInjectionProtection = (req, res, next) => {
     /(\bOR\b.*=.*\bOR\b)/gi,
     /(\bAND\b.*=.*\bAND\b)/gi
   ];
-  
+
   const checkForSqlInjection = (obj) => {
     for (const key in obj) {
       if (typeof obj[key] === 'string') {
@@ -177,7 +190,7 @@ const sqlInjectionProtection = (req, res, next) => {
       }
     }
   };
-  
+
   try {
     if (req.body) checkForSqlInjection(req.body);
     if (req.query) checkForSqlInjection(req.query);
@@ -185,7 +198,7 @@ const sqlInjectionProtection = (req, res, next) => {
   } catch (error) {
     return next(error);
   }
-  
+
   next();
 };
 
@@ -199,7 +212,7 @@ const healthCheck = (req, res) => {
     pid: process.pid,
     node_version: process.version
   };
-  
+
   res.json(healthData);
 };
 

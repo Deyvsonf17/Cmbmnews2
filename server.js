@@ -82,9 +82,24 @@ function isValidEmail(email) {
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const BASE_URL = process.env.KOYEB_PUBLIC_DOMAIN 
-  ? `https://${process.env.KOYEB_PUBLIC_DOMAIN}` 
-  : process.env.URL_ACESSO || `https://purring-carma-cmbmnews-711b5e33.koyeb.app`;
+// Detectar automaticamente a URL baseada no ambiente
+let BASE_URL;
+
+if (process.env.REPL_SLUG && process.env.REPL_OWNER) {
+  // Ambiente Replit
+  BASE_URL = `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.replit.app`;
+} else if (process.env.KOYEB_PUBLIC_DOMAIN) {
+  // Ambiente Koyeb
+  BASE_URL = `https://${process.env.KOYEB_PUBLIC_DOMAIN}`;
+} else if (process.env.URL_ACESSO) {
+  // URL manual
+  BASE_URL = process.env.URL_ACESSO;
+} else {
+  // Fallback para desenvolvimento
+  BASE_URL = `http://localhost:${PORT}`;
+}
+
+console.log(`🌐 URL detectada: ${BASE_URL}`);
 
 // Configurar trust proxy para Koyeb/Replit
 app.set('trust proxy', true);
@@ -3561,7 +3576,38 @@ app.post('/redefinir-senha/nova', async (req, res) => {
 });
 
 // Health check endpoint
-app.get('/health', healthCheck);
+app.get('/health', (req, res) => {
+  try {
+    const db = getDatabase();
+    
+    // Teste simples do banco
+    db.get('SELECT 1 as test', [], (err, result) => {
+      if (err) {
+        console.error('Health check - erro no banco:', err);
+        return res.status(500).json({
+          status: 'error',
+          message: 'Database connection failed',
+          timestamp: new Date().toISOString()
+        });
+      }
+      
+      res.status(200).json({
+        status: 'ok',
+        message: 'Server is running',
+        database: 'connected',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+      });
+    });
+  } catch (error) {
+    console.error('Health check error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Internal server error',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
 
 // Inicializar banco de dados e servidor
 async function startServer() {
