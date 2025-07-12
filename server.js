@@ -85,21 +85,24 @@ const PORT = process.env.PORT || 5000;
 // Detectar automaticamente a URL baseada no ambiente
 let BASE_URL;
 
-if (process.env.REPL_SLUG && process.env.REPL_OWNER) {
-  // Ambiente Replit
-  BASE_URL = `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.replit.app`;
+if (process.env.BASE_URL) {
+  // URL definida manualmente (prioridade máxima)
+  BASE_URL = process.env.BASE_URL;
 } else if (process.env.KOYEB_PUBLIC_DOMAIN) {
   // Ambiente Koyeb
   BASE_URL = `https://${process.env.KOYEB_PUBLIC_DOMAIN}`;
+} else if (process.env.REPL_SLUG && process.env.REPL_OWNER) {
+  // Ambiente Replit
+  BASE_URL = `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.replit.app`;
 } else if (process.env.URL_ACESSO) {
-  // URL manual
+  // URL manual (compatibilidade)
   BASE_URL = process.env.URL_ACESSO;
 } else {
   // Fallback para desenvolvimento
   BASE_URL = `http://localhost:${PORT}`;
 }
 
-console.log(`🌐 URL detectada: ${BASE_URL}`);
+console.log(`🌐 URL base configurada: ${BASE_URL}`);
 
 // Configurar trust proxy para Koyeb/Replit
 app.set('trust proxy', true);
