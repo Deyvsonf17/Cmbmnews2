@@ -4,8 +4,9 @@
   "main": "database.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node start.js",
+    "dev": "node server.js",
+    "koyeb": "node start.js"
   },
   "keywords": [],
   "author": "",

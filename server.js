@@ -82,10 +82,12 @@ function isValidEmail(email) {
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const BASE_URL = process.env.URL_ACESSO || 'https://de5a6fec-33bd-4e76-9e93-897a4d8ab78b-00-2ayg4w3174e48.riker.replit.dev';
+const BASE_URL = process.env.KOYEB_PUBLIC_DOMAIN 
+  ? `https://${process.env.KOYEB_PUBLIC_DOMAIN}` 
+  : process.env.URL_ACESSO || `https://purring-carma-cmbmnews-711b5e33.koyeb.app`;
 
-// Configurar trust proxy para Replit
-app.set('trust proxy', 1);
+// Configurar trust proxy para Koyeb/Replit
+app.set('trust proxy', true);
 
 // Configurar tratamento de erros não capturados
 uncaughtExceptionHandler();
@@ -3568,7 +3570,8 @@ async function startServer() {
 
     const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`Servidor CMBM NEWS rodando na porta ${PORT}`);
-      console.log(`Acesse: ${BASE_URL}`);
+      console.log(`URL do Koyeb: ${BASE_URL}`);
+      console.log(`Servidor configurado para aceitar requisições externas`);
     });
 
     app.get('/debug', (req, res) => {
