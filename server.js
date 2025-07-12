@@ -1300,6 +1300,11 @@ app.post('/login', rateLimits.login, (req, res) => {
   }
 });
 
+
+// 🔥 — Health-check para o UptimeRobot / Render
+app.get('/healthz', (_req, res) => res.status(200).send('OK'));
+
+
 // Rota para logout
 app.get('/logout', (req, res) => {
   console.log('🚪 Processando logout para usuário:', req.session.user?.nome || 'Anônimo');
